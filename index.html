@@ -10,24 +10,14 @@
   </head>
 
   <body>
-
     <main class="remote">
-
       <!-- TOP CONTROLS -->
       <header class="top-bar">
-
-        <!-- Power -->
-        <button
-          class="icon-button"
-          id="powerButton"
-          data-command="power"
-        >
+        <button class="icon-button" id="powerButton" data-command="power">
           ⏻
         </button>
 
-        <!-- Volume -->
         <div class="volume-controls">
-
           <button
             class="icon-button"
             id="volumeDown"
@@ -38,114 +28,84 @@
 
           <span>VOL</span>
 
-          <button
-            class="icon-button"
-            id="volumeUp"
-            data-command="volume-up"
-          >
+          <button class="icon-button" id="volumeUp" data-command="volume-up">
             +
           </button>
-
         </div>
 
-        <!-- Desktop -->
-        <button
-          class="icon-button"
-          id="desktopButton"
-          data-command="desktop"
-        >
+        <button class="icon-button" id="desktopButton" data-command="desktop">
           Desktop
         </button>
-
       </header>
-
 
       <!-- SERVICES -->
       <section class="app-grid">
+        <button class="app-button" data-command="netflix">Netflix</button>
 
-        <button class="app-button" data-command="netflix">
-          Netflix
-        </button>
+        <button class="app-button" data-command="disney">Disney+</button>
 
-        <button class="app-button" data-command="disney">
-          Disney+
-        </button>
+        <button class="app-button" data-command="max">Max</button>
 
-        <button class="app-button" data-command="max">
-          Max
-        </button>
+        <button class="app-button" data-command="youtube">YouTube</button>
 
-        <button class="app-button" data-command="youtube">
-          YouTube
-        </button>
+        <button class="app-button" data-command="yle">Yle</button>
 
-        <button class="app-button" data-command="yle">
-          Yle
-        </button>
+        <button class="app-button" data-command="web">Web</button>
 
-        <button class="app-button" data-command="web">
-          Web
-        </button>
+        <button class="app-button" data-command="steam">Steam</button>
 
-        <button class="app-button" data-command="steam">
-          Steam
-        </button>
-
-        <button class="app-button" data-command="retro">
-          Retro
-        </button>
-
+        <button class="app-button" data-command="retro">Retro</button>
       </section>
-
 
       <!-- KEYBOARD / TRACKPAD BUTTON -->
       <footer class="bottom-controls">
-
-        <button
-          class="control-button"
-          id="inputButton"
-          data-command="input"
-        >
+        <button class="control-button" id="inputButton" data-command="input">
           ⌨ Keyboard & Trackpad
         </button>
-
       </footer>
-
     </main>
-
 
     <!-- KEYBOARD + TRACKPAD POPUP -->
     <div class="input-panel" id="inputPanel">
-
       <div class="input-panel-header">
-
         <span>Keyboard & Trackpad</span>
 
-        <button id="closeInputPanel">
-          ✕
-        </button>
-
+        <button id="closeInputPanel">✕</button>
       </div>
 
-
-      <!-- Trackpad -->
+      <!-- TRACKPAD -->
       <div class="trackpad" id="trackpad">
         <span>Trackpad</span>
       </div>
 
+      <!-- MOUSE BUTTONS -->
+      <div class="mouse-buttons">
+        <button
+          class="mouse-button"
+          id="leftClickButton"
+          data-command="left-click"
+        >
+          Left Click
+        </button>
 
-      <!-- Opens phone's native keyboard -->
+        <button
+          class="mouse-button"
+          id="rightClickButton"
+          data-command="right-click"
+        >
+          Right Click
+        </button>
+      </div>
+
+      <!-- KEYBOARD INPUT -->
       <input
         type="text"
         id="keyboardInput"
         placeholder="Tap here to type"
         autocomplete="off"
       />
-
     </div>
 
-
     <script src="app.js"></script>
-
   </body>
 </html>
