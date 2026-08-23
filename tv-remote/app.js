@@ -1,4 +1,5 @@
 const SERVER_URL = "http://192.168.1.93:8765";
+const WEBSOCKET_URL = "ws://192.168.1.93:8766";
 
 const inputButton = document.getElementById("inputButton");
 const inputPanel = document.getElementById("inputPanel");
@@ -7,7 +8,35 @@ const keyboardInput = document.getElementById("keyboardInput");
 const trackpad = document.getElementById("trackpad");
 
 // ----------------------------
-// SEND STANDARD COMMAND
+// WEBSOCKET CONNECTION
+// ----------------------------
+
+let controlSocket = null;
+
+function connectControlSocket() {
+  controlSocket = new WebSocket(WEBSOCKET_URL);
+
+  controlSocket.addEventListener("open", () => {
+    console.log("WebSocket connected");
+  });
+
+  controlSocket.addEventListener("close", () => {
+    console.log("WebSocket disconnected");
+
+    setTimeout(() => {
+      connectControlSocket();
+    }, 1000);
+  });
+
+  controlSocket.addEventListener("error", (error) => {
+    console.error("WebSocket error:", error);
+  });
+}
+
+connectControlSocket();
+
+// ----------------------------
+// STANDARD HTTP COMMANDS
 // ----------------------------
 
 async function sendCommand(command) {
@@ -38,7 +67,20 @@ async function sendCommand(command) {
 }
 
 // ----------------------------
-// THROTTLED MOUSE MOVEMENT
+// WEBSOCKET SEND HELPER
+// ----------------------------
+
+function sendSocketCommand(data) {
+  if (
+    controlSocket &&
+    controlSocket.readyState === WebSocket.OPEN
+  ) {
+    controlSocket.send(JSON.stringify(data));
+  }
+}
+
+// ----------------------------
+// MOUSE MOVEMENT
 // ----------------------------
 
 let pendingMouseX = 0;
@@ -53,7 +95,7 @@ function sendMouseMove(dx, dy) {
 
   mouseSendScheduled = true;
 
-  requestAnimationFrame(async () => {
+  requestAnimationFrame(() => {
     const moveX = pendingMouseX;
     const moveY = pendingMouseY;
 
@@ -61,21 +103,22 @@ function sendMouseMove(dx, dy) {
     pendingMouseY = 0;
     mouseSendScheduled = false;
 
-    try {
-      await fetch(`${SERVER_URL}/command`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          command: "mouse-move",
-          dx: moveX,
-          dy: moveY,
-        }),
-      });
-    } catch (error) {
-      console.error("Mouse movement failed:", error);
-    }
+    sendSocketCommand({
+      command: "mouse-move",
+      dx: moveX,
+      dy: moveY,
+    });
+  });
+}
+
+// ----------------------------
+// SCROLL
+// ----------------------------
+
+function sendScroll(delta) {
+  sendSocketCommand({
+    command: "scroll",
+    delta: delta,
   });
 }
 
@@ -83,13 +126,13 @@ function sendMouseMove(dx, dy) {
 // COMMAND BUTTONS
 // ----------------------------
 
-const commandButtons = document.querySelectorAll("[data-command]");
+const commandButtons =
+  document.querySelectorAll("[data-command]");
 
 commandButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const command = button.dataset.command;
 
-    // Opening the input panel is local UI only.
     if (command !== "input") {
       sendCommand(command);
     }
@@ -112,131 +155,157 @@ closeInputPanel.addEventListener("click", () => {
 // KEYBOARD
 // ----------------------------
 
+let lastKeyboardValue = "";
+
 keyboardInput.addEventListener("input", (event) => {
-  console.log("Keyboard:", event.target.value);
+  const currentValue = event.target.value;
+
+  // New characters typed
+  if (currentValue.length > lastKeyboardValue.length) {
+    const newText =
+      currentValue.slice(lastKeyboardValue.length);
+
+    sendSocketCommand({
+      command: "type-text",
+      text: newText,
+    });
+  }
+
+  // Characters deleted
+  if (currentValue.length < lastKeyboardValue.length) {
+    const deletedCount =
+      lastKeyboardValue.length - currentValue.length;
+
+    sendSocketCommand({
+      command: "backspace",
+      count: deletedCount,
+    });
+  }
+
+  lastKeyboardValue = currentValue;
+});
+
+// Enter / Send
+keyboardInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+
+    sendSocketCommand({
+      command: "key-press",
+      key: "enter",
+    });
+  }
 });
 
 // ----------------------------
-// TRACKPAD
+// ONE-FINGER TRACKPAD MOVEMENT
 // ----------------------------
 
-let activePointers = new Map();
-let lastSinglePointerPosition = null;
-let lastTwoFingerY = null;
+let activePointerId = null;
+let lastPointerX = null;
+let lastPointerY = null;
 
 trackpad.addEventListener("pointerdown", (event) => {
-  activePointers.set(event.pointerId, {
-    x: event.clientX,
-    y: event.clientY,
-  });
+  if (activePointerId !== null) return;
+
+  activePointerId = event.pointerId;
+  lastPointerX = event.clientX;
+  lastPointerY = event.clientY;
 
   trackpad.setPointerCapture(event.pointerId);
-
-  // One finger = mouse movement
-  if (activePointers.size === 1) {
-    lastSinglePointerPosition = {
-      x: event.clientX,
-      y: event.clientY,
-    };
-
-    lastTwoFingerY = null;
-  }
-
-  // Two fingers = scrolling
-  if (activePointers.size === 2) {
-    const pointers = Array.from(activePointers.values());
-
-    lastTwoFingerY =
-      (pointers[0].y + pointers[1].y) / 2;
-
-    lastSinglePointerPosition = null;
-  }
 });
 
 trackpad.addEventListener("pointermove", (event) => {
-  if (!activePointers.has(event.pointerId)) return;
+  if (event.pointerId !== activePointerId) return;
 
-  activePointers.set(event.pointerId, {
-    x: event.clientX,
-    y: event.clientY,
-  });
+  const deltaX = event.clientX - lastPointerX;
+  const deltaY = event.clientY - lastPointerY;
 
-  // ----------------------------
-  // ONE FINGER: MOUSE MOVEMENT
-  // ----------------------------
+  sendMouseMove(deltaX, deltaY);
 
-  if (
-    activePointers.size === 1 &&
-    lastSinglePointerPosition
-  ) {
-    const deltaX =
-      event.clientX - lastSinglePointerPosition.x;
-
-    const deltaY =
-      event.clientY - lastSinglePointerPosition.y;
-
-    console.log("Mouse move:", deltaX, deltaY);
-
-    sendMouseMove(deltaX, deltaY);
-
-    lastSinglePointerPosition = {
-      x: event.clientX,
-      y: event.clientY,
-    };
-  }
-
-  // ----------------------------
-  // TWO FINGERS: SCROLL
-  // ----------------------------
-
-  if (activePointers.size === 2) {
-    const pointers =
-      Array.from(activePointers.values());
-
-    const currentTwoFingerY =
-      (pointers[0].y + pointers[1].y) / 2;
-
-    if (lastTwoFingerY !== null) {
-      const scrollDelta =
-        currentTwoFingerY - lastTwoFingerY;
-
-      console.log("Scroll:", scrollDelta);
-
-      // Scroll not sent to server yet.
-    }
-
-    lastTwoFingerY = currentTwoFingerY;
-  }
+  lastPointerX = event.clientX;
+  lastPointerY = event.clientY;
 });
 
-function removePointer(event) {
-  activePointers.delete(event.pointerId);
+function endPointer(event) {
+  if (event.pointerId !== activePointerId) return;
 
-  // Back to one finger after a two-finger gesture
-  if (activePointers.size === 1) {
-    const remainingPointer =
-      Array.from(activePointers.values())[0];
-
-    lastSinglePointerPosition = {
-      x: remainingPointer.x,
-      y: remainingPointer.y,
-    };
-
-    lastTwoFingerY = null;
-  }
-
-  // No fingers left
-  if (activePointers.size === 0) {
-    lastSinglePointerPosition = null;
-    lastTwoFingerY = null;
-  }
+  activePointerId = null;
+  lastPointerX = null;
+  lastPointerY = null;
 
   try {
     trackpad.releasePointerCapture(event.pointerId);
   } catch {
-    // Pointer capture may already have been released.
+    // Already released.
   }
 }
 
-trackpad.addEventListener("pointerup", removePointer);
-trackpad.addEventListener("pointercancel", removePointer);
+trackpad.addEventListener("pointerup", endPointer);
+trackpad.addEventListener("pointercancel", endPointer);
+
+// ----------------------------
+// TWO-FINGER SCROLL
+// ----------------------------
+
+let lastTwoFingerY = null;
+
+trackpad.addEventListener(
+  "touchstart",
+  (event) => {
+    if (event.touches.length === 2) {
+      event.preventDefault();
+
+      const y1 = event.touches[0].clientY;
+      const y2 = event.touches[1].clientY;
+
+      lastTwoFingerY = (y1 + y2) / 2;
+
+      activePointerId = null;
+      lastPointerX = null;
+      lastPointerY = null;
+    }
+  },
+  { passive: false },
+);
+
+trackpad.addEventListener(
+  "touchmove",
+  (event) => {
+    if (event.touches.length !== 2) return;
+
+    event.preventDefault();
+
+    const y1 = event.touches[0].clientY;
+    const y2 = event.touches[1].clientY;
+
+    const currentY = (y1 + y2) / 2;
+
+    if (lastTwoFingerY !== null) {
+      const delta = currentY - lastTwoFingerY;
+
+      sendScroll(delta);
+    }
+
+    lastTwoFingerY = currentY;
+  },
+  { passive: false },
+);
+
+trackpad.addEventListener(
+  "touchend",
+  (event) => {
+    if (event.touches.length < 2) {
+      lastTwoFingerY = null;
+    }
+  },
+  { passive: false },
+);
+
+trackpad.addEventListener(
+  "touchcancel",
+  () => {
+    lastTwoFingerY = null;
+  },
+  { passive: false },
+);
