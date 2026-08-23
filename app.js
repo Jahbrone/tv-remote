@@ -29,32 +29,105 @@ keyboardInput.addEventListener("input", (event) => {
   console.log("Keyboard:", event.target.value);
 });
 
-// Trackpad movement only
-let lastX = null;
-let lastY = null;
+// ----------------------------
+// TRACKPAD
+// ----------------------------
+
+let activePointers = new Map();
+let lastSinglePointerPosition = null;
+let lastTwoFingerY = null;
 
 trackpad.addEventListener("pointerdown", (event) => {
-  lastX = event.clientX;
-  lastY = event.clientY;
+  activePointers.set(event.pointerId, {
+    x: event.clientX,
+    y: event.clientY,
+  });
 
   trackpad.setPointerCapture(event.pointerId);
+
+  // One finger = mouse movement
+  if (activePointers.size === 1) {
+    lastSinglePointerPosition = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+
+    lastTwoFingerY = null;
+  }
+
+  // Two fingers = scrolling
+  if (activePointers.size === 2) {
+    const pointers = Array.from(activePointers.values());
+
+    lastTwoFingerY = (pointers[0].y + pointers[1].y) / 2;
+    lastSinglePointerPosition = null;
+  }
 });
 
 trackpad.addEventListener("pointermove", (event) => {
-  if (lastX === null || lastY === null) return;
+  if (!activePointers.has(event.pointerId)) return;
 
-  const deltaX = event.clientX - lastX;
-  const deltaY = event.clientY - lastY;
+  activePointers.set(event.pointerId, {
+    x: event.clientX,
+    y: event.clientY,
+  });
 
-  console.log("Mouse move:", deltaX, deltaY);
+  // ONE FINGER: mouse movement
+  if (activePointers.size === 1 && lastSinglePointerPosition) {
+    const deltaX = event.clientX - lastSinglePointerPosition.x;
+    const deltaY = event.clientY - lastSinglePointerPosition.y;
 
-  lastX = event.clientX;
-  lastY = event.clientY;
+    console.log("Mouse move:", deltaX, deltaY);
+
+    lastSinglePointerPosition = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  // TWO FINGERS: scroll
+  if (activePointers.size === 2) {
+    const pointers = Array.from(activePointers.values());
+
+    const currentTwoFingerY = (pointers[0].y + pointers[1].y) / 2;
+
+    if (lastTwoFingerY !== null) {
+      const scrollDelta = currentTwoFingerY - lastTwoFingerY;
+
+      console.log("Scroll:", scrollDelta);
+    }
+
+    lastTwoFingerY = currentTwoFingerY;
+  }
 });
 
-trackpad.addEventListener("pointerup", (event) => {
-  lastX = null;
-  lastY = null;
+function removePointer(event) {
+  activePointers.delete(event.pointerId);
 
-  trackpad.releasePointerCapture(event.pointerId);
-});
+  // If we're back to one finger, reset mouse movement position
+  if (activePointers.size === 1) {
+    const remainingPointer = Array.from(activePointers.values())[0];
+
+    lastSinglePointerPosition = {
+      x: remainingPointer.x,
+      y: remainingPointer.y,
+    };
+
+    lastTwoFingerY = null;
+  }
+
+  // No fingers left
+  if (activePointers.size === 0) {
+    lastSinglePointerPosition = null;
+    lastTwoFingerY = null;
+  }
+
+  try {
+    trackpad.releasePointerCapture(event.pointerId);
+  } catch {
+    // Pointer capture may already have been released
+  }
+}
+
+trackpad.addEventListener("pointerup", removePointer);
+trackpad.addEventListener("pointercancel", removePointer);
