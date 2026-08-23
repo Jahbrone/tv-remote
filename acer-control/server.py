@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import asyncio
 import json
+import subprocess
 import threading
 import webbrowser
 
@@ -56,6 +57,38 @@ def execute_command(command, data):
         webbrowser.open("https://www.netflix.com")
         return True
 
+    if command == "disney":
+        webbrowser.open("https://www.disneyplus.com")
+        return True
+
+    if command == "max":
+        webbrowser.open("https://www.max.com")
+        return True
+
+    if command == "youtube":
+        webbrowser.open("https://www.youtube.com")
+        return True
+
+    if command == "yle":
+        webbrowser.open("https://areena.yle.fi")
+        return True
+
+    if command == "web":
+        webbrowser.open("https://www.google.com")
+        return True
+
+    if command == "desktop":
+        # macOS prototype only.
+        subprocess.run(
+            [
+                "osascript",
+                "-e",
+                'tell application "System Events" to key code 103',
+            ],
+            check=False,
+        )
+        return True
+
     if command == "left-click":
         pyautogui.click()
         return True
@@ -63,6 +96,26 @@ def execute_command(command, data):
     if command == "right-click":
         pyautogui.rightClick()
         return True
+
+    if command == "volume-up":
+        pyautogui.press("volumeup")
+        return True
+
+    if command == "volume-down":
+        pyautogui.press("volumedown")
+        return True
+
+    if command == "steam":
+        print("Steam command received — not configured yet")
+        return False
+
+    if command == "retro":
+        print("Retro command received — not configured yet")
+        return False
+
+    if command == "power":
+        print("Power command received — not configured yet")
+        return False
 
     print(f"No action configured for: {command}")
     return False
@@ -156,7 +209,6 @@ async def handle_websocket(websocket):
             data = json.loads(message)
             command = data.get("command")
 
-            # Mouse movement
             if command == "mouse-move":
                 dx = data.get("dx", 0)
                 dy = data.get("dy", 0)
@@ -166,7 +218,6 @@ async def handle_websocket(websocket):
                     dy * MOUSE_SENSITIVITY,
                 )
 
-            # Two-finger scroll
             elif command == "scroll":
                 delta = data.get("delta", 0)
 
@@ -177,7 +228,6 @@ async def handle_websocket(websocket):
                 if scroll_amount != 0:
                     pyautogui.scroll(scroll_amount)
 
-            # Type normal text
             elif command == "type-text":
                 text = data.get("text", "")
 
@@ -187,7 +237,6 @@ async def handle_websocket(websocket):
                         interval=0,
                     )
 
-            # Backspace
             elif command == "backspace":
                 count = int(
                     data.get("count", 1)
@@ -196,7 +245,6 @@ async def handle_websocket(websocket):
                 for _ in range(count):
                     pyautogui.press("backspace")
 
-            # Special key presses
             elif command == "key-press":
                 key = data.get("key")
 
