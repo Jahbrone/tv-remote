@@ -1,8 +1,18 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import webbrowser
 
 HOST = "0.0.0.0"
 PORT = 8765
+
+
+def execute_command(command):
+    if command == "netflix":
+        webbrowser.open("https://www.netflix.com")
+        return True
+
+    print(f"No action configured for: {command}")
+    return False
 
 
 class ControlHandler(BaseHTTPRequestHandler):
@@ -33,9 +43,12 @@ class ControlHandler(BaseHTTPRequestHandler):
 
             print(f"Received command: {command}")
 
+            executed = execute_command(command)
+
             response = {
                 "status": "ok",
                 "command": command,
+                "executed": executed,
             }
 
             self.send_response(200)
@@ -43,9 +56,7 @@ class ControlHandler(BaseHTTPRequestHandler):
             self._send_cors_headers()
             self.end_headers()
 
-            self.wfile.write(
-                (json.dumps(response) + "\n").encode()
-            )
+            self.wfile.write((json.dumps(response) + "\n").encode())
 
         except json.JSONDecodeError:
             self.send_response(400)

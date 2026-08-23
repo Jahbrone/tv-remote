@@ -1,5 +1,4 @@
-const SERVER_URL = "http://localhost:8765";
-
+const SERVER_URL = "http://192.168.1.93:8765";
 const inputButton = document.getElementById("inputButton");
 const inputPanel = document.getElementById("inputPanel");
 const closeInputPanel = document.getElementById("closeInputPanel");
