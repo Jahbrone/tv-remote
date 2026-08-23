@@ -13,13 +13,18 @@
     <main class="remote">
       <!-- TOP CONTROLS -->
       <header class="top-bar">
-        <button class="icon-button" id="powerButton" data-command="power">
-          ⏻
+        <button
+          class="icon-button power-button"
+          id="powerButton"
+          data-command="power"
+          aria-label="Power"
+        >
+          <img src="img/power.svg" alt="Power" />
         </button>
 
         <div class="volume-controls">
           <button
-            class="icon-button"
+            class="icon-button volume-button"
             id="volumeDown"
             data-command="volume-down"
           >
@@ -28,33 +33,61 @@
 
           <span>VOL</span>
 
-          <button class="icon-button" id="volumeUp" data-command="volume-up">
+          <button
+            class="icon-button volume-button"
+            id="volumeUp"
+            data-command="volume-up"
+          >
             +
           </button>
         </div>
 
-        <button class="icon-button" id="desktopButton" data-command="desktop">
-          Desktop
+        <button
+          class="icon-button desktop-button"
+          id="desktopButton"
+          data-command="desktop"
+          aria-label="Desktop"
+        >
+          <img src="img/home.svg" alt="Desktop" />
         </button>
       </header>
 
       <!-- SERVICES -->
       <section class="app-grid">
-        <button class="app-button" data-command="netflix">Netflix</button>
+        <button class="app-button" data-command="netflix" aria-label="Netflix">
+          <img src="img/netflix.svg" alt="Netflix" />
+        </button>
 
-        <button class="app-button" data-command="disney">Disney+</button>
+        <button class="app-button" data-command="disney" aria-label="Disney+">
+          <img src="img/disney.svg" alt="Disney+" />
+        </button>
 
-        <button class="app-button" data-command="max">Max</button>
+        <button class="app-button" data-command="max" aria-label="Max">
+          <img src="img/hbo.svg" alt="Max" />
+        </button>
 
-        <button class="app-button" data-command="youtube">YouTube</button>
+        <button class="app-button" data-command="youtube" aria-label="YouTube">
+          <img src="img/youtube.svg" alt="YouTube" />
+        </button>
 
-        <button class="app-button" data-command="yle">Yle</button>
+        <button class="app-button" data-command="yle" aria-label="Yle">
+          <img src="img/yle.svg" alt="Yle" />
+        </button>
 
-        <button class="app-button" data-command="web">Web</button>
+        <button class="app-button" data-command="web" aria-label="Internet">
+          <img src="img/internet.svg" alt="Internet" />
+        </button>
 
-        <button class="app-button" data-command="steam">Steam</button>
+        <button class="app-button" data-command="steam" aria-label="Steam">
+          <img src="img/steam.svg" alt="Steam" />
+        </button>
 
-        <button class="app-button" data-command="retro">Retro</button>
+        <button class="app-button" data-command="retro" aria-label="Retro">
+          <img src="img/retro.svg" alt="Retro" />
+        </button>
+        <button class="app-button" data-command="screensaver" aria-label="Screensaver">
+          <img src="img/photo.svg" alt="photo" />
+        </button>
       </section>
 
       <!-- KEYBOARD / TRACKPAD BUTTON -->
