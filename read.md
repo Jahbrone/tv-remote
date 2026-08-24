@@ -5,11 +5,11 @@ Phone remote and control service for the Laptop TV project.
 
 server starting
 
-control server: 
+## CONTROL SERVER
 source .venv/bin/activate
 python acer-control/server.py
 
-remote server:
+## REMOTE SERVER
 python3 -m http.server 8000 --bind 0.0.0.0 --directory tv-remote
 
 

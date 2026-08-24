@@ -6,6 +6,7 @@ const inputPanel = document.getElementById("inputPanel");
 const closeInputPanel = document.getElementById("closeInputPanel");
 const keyboardInput = document.getElementById("keyboardInput");
 const trackpad = document.getElementById("trackpad");
+const powerButton = document.getElementById("powerButton");
 
 // ----------------------------
 // WEBSOCKET CONNECTION
@@ -80,6 +81,53 @@ function sendSocketCommand(data) {
 }
 
 // ----------------------------
+// POWER BUTTON — LONG HOLD
+// ----------------------------
+
+const POWER_HOLD_TIME = 1000;
+
+let powerHoldTimer = null;
+let powerTriggered = false;
+
+function startPowerHold(event) {
+  event.preventDefault();
+
+  powerTriggered = false;
+
+  powerButton.classList.add("holding");
+
+  powerHoldTimer = setTimeout(() => {
+    powerTriggered = true;
+    powerHoldTimer = null;
+
+    powerButton.classList.remove("holding");
+    powerButton.classList.add("power-triggered");
+
+    sendCommand("power");
+
+    setTimeout(() => {
+      powerButton.classList.remove("power-triggered");
+    }, 300);
+  }, POWER_HOLD_TIME);
+}
+
+function cancelPowerHold() {
+  if (powerHoldTimer !== null) {
+    clearTimeout(powerHoldTimer);
+    powerHoldTimer = null;
+  }
+
+  if (!powerTriggered) {
+    powerButton.classList.remove("holding");
+  }
+}
+
+powerButton.addEventListener("pointerdown", startPowerHold);
+powerButton.addEventListener("pointerup", cancelPowerHold);
+powerButton.addEventListener("pointerleave", cancelPowerHold);
+powerButton.addEventListener("pointercancel", cancelPowerHold);
+
+// ----------------------------
 // MOUSE MOVEMENT
 // ----------------------------
 
@@ -133,9 +181,17 @@ commandButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const command = button.dataset.command;
 
-    if (command !== "input") {
-      sendCommand(command);
+    // Power uses long-hold behaviour instead.
+    if (command === "power") {
+      return;
     }
+
+    // Input panel opens locally.
+    if (command === "input") {
+      return;
+    }
+
+    sendCommand(command);
   });
 });
 
