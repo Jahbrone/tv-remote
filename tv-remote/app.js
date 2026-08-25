@@ -1,5 +1,5 @@
-const SERVER_URL = "http://192.168.1.93:8765";
-const WEBSOCKET_URL = "ws://192.168.1.93:8766";
+const SERVER_URL = "http://192.168.1.187:8765";
+const WEBSOCKET_URL = "ws://192.168.1.187:8766";
 
 const inputButton = document.getElementById("inputButton");
 const inputPanel = document.getElementById("inputPanel");
@@ -72,10 +72,7 @@ async function sendCommand(command) {
 // ----------------------------
 
 function sendSocketCommand(data) {
-  if (
-    controlSocket &&
-    controlSocket.readyState === WebSocket.OPEN
-  ) {
+  if (controlSocket && controlSocket.readyState === WebSocket.OPEN) {
     controlSocket.send(JSON.stringify(data));
   }
 }
@@ -93,7 +90,6 @@ function startPowerHold(event) {
   event.preventDefault();
 
   powerTriggered = false;
-
   powerButton.classList.add("holding");
 
   powerHoldTimer = setTimeout(() => {
@@ -174,8 +170,7 @@ function sendScroll(delta) {
 // COMMAND BUTTONS
 // ----------------------------
 
-const commandButtons =
-  document.querySelectorAll("[data-command]");
+const commandButtons = document.querySelectorAll("[data-command]");
 
 commandButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -218,8 +213,7 @@ keyboardInput.addEventListener("input", (event) => {
 
   // New characters typed
   if (currentValue.length > lastKeyboardValue.length) {
-    const newText =
-      currentValue.slice(lastKeyboardValue.length);
+    const newText = currentValue.slice(lastKeyboardValue.length);
 
     sendSocketCommand({
       command: "type-text",
@@ -229,8 +223,7 @@ keyboardInput.addEventListener("input", (event) => {
 
   // Characters deleted
   if (currentValue.length < lastKeyboardValue.length) {
-    const deletedCount =
-      lastKeyboardValue.length - currentValue.length;
+    const deletedCount = lastKeyboardValue.length - currentValue.length;
 
     sendSocketCommand({
       command: "backspace",

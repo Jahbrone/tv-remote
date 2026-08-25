@@ -1,14 +1,23 @@
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import asyncio
 import json
-import os
 import subprocess
 import threading
 import webbrowser
 
 import pyautogui
 import websockets
+
+from Quartz import (
+    CGEventCreate,
+    CGEventGetLocation,
+    CGEventCreateMouseEvent,
+    CGEventPost,
+    kCGEventMouseMoved,
+    kCGMouseButtonLeft,
+    kCGHIDEventTap,
+)
 
 
 HOST = "0.0.0.0"
@@ -20,15 +29,24 @@ SCROLL_SENSITIVITY = 0.15
 
 
 # ----------------------------
-# MOUSE MOVEMENT
+# NATIVE MAC MOUSE MOVEMENT
 # ----------------------------
 
 def move_mouse(dx, dy):
-    pyautogui.moveRel(
-        dx * MOUSE_SENSITIVITY,
-        dy * MOUSE_SENSITIVITY,
-        duration=0,
+    event = CGEventCreate(None)
+    position = CGEventGetLocation(event)
+
+    new_x = position.x + dx
+    new_y = position.y + dy
+
+    move_event = CGEventCreateMouseEvent(
+        None,
+        kCGEventMouseMoved,
+        (new_x, new_y),
+        kCGMouseButtonLeft,
     )
+
+    CGEventPost(kCGHIDEventTap, move_event)
 
 
 # ----------------------------
@@ -61,7 +79,15 @@ def execute_command(command, data):
         return True
 
     if command == "desktop":
-        pyautogui.hotkey("win", "d")
+        # macOS prototype only.
+        subprocess.run(
+            [
+                "osascript",
+                "-e",
+                'tell application "System Events" to key code 103',
+            ],
+            check=False,
+        )
         return True
 
     if command == "left-click":
@@ -81,13 +107,7 @@ def execute_command(command, data):
         return True
 
     if command == "steam":
-        steam_path = r"C:\Program Files (x86)\Steam\Steam.exe"
-
-        if os.path.exists(steam_path):
-            subprocess.Popen([steam_path])
-            return True
-
-        print("Steam not found")
+        print("Steam command received — not configured yet")
         return False
 
     if command == "retro":
@@ -107,6 +127,7 @@ def execute_command(command, data):
 # ----------------------------
 
 class ControlHandler(BaseHTTPRequestHandler):
+
     def _send_cors_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -132,7 +153,6 @@ class ControlHandler(BaseHTTPRequestHandler):
 
         try:
             data = json.loads(body)
-
             command = data.get("command")
 
             print(f"Received command: {command}")
@@ -146,10 +166,12 @@ class ControlHandler(BaseHTTPRequestHandler):
             }
 
             self.send_response(200)
+
             self.send_header(
                 "Content-Type",
                 "application/json",
             )
+
             self._send_cors_headers()
             self.end_headers()
 
@@ -186,14 +208,16 @@ async def handle_websocket(websocket):
     try:
         async for message in websocket:
             data = json.loads(message)
-
             command = data.get("command")
 
             if command == "mouse-move":
                 dx = data.get("dx", 0)
                 dy = data.get("dy", 0)
 
-                move_mouse(dx, dy)
+                move_mouse(
+                    dx * MOUSE_SENSITIVITY,
+                    dy * MOUSE_SENSITIVITY,
+                )
 
             elif command == "scroll":
                 delta = data.get("delta", 0)
