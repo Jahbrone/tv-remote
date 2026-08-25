@@ -2,10 +2,15 @@ const SERVER_URL = "http://192.168.1.187:8765";
 const WEBSOCKET_URL = "ws://192.168.1.187:8766";
 
 const inputButton = document.getElementById("inputButton");
+
 const inputPanel = document.getElementById("inputPanel");
+
 const closeInputPanel = document.getElementById("closeInputPanel");
+
 const keyboardInput = document.getElementById("keyboardInput");
+
 const trackpad = document.getElementById("trackpad");
+
 const powerButton = document.getElementById("powerButton");
 
 // ----------------------------
@@ -46,16 +51,19 @@ async function sendCommand(command) {
   try {
     const response = await fetch(`${SERVER_URL}/command`, {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json",
       },
+
       body: JSON.stringify({
-        command: command,
+        command,
       }),
     });
 
     if (!response.ok) {
       console.error(`Server error: ${response.status}`);
+
       return;
     }
 
@@ -68,7 +76,7 @@ async function sendCommand(command) {
 }
 
 // ----------------------------
-// WEBSOCKET SEND HELPER
+// WEBSOCKET SEND
 // ----------------------------
 
 function sendSocketCommand(data) {
@@ -78,7 +86,7 @@ function sendSocketCommand(data) {
 }
 
 // ----------------------------
-// POWER BUTTON — LONG HOLD
+// POWER — LONG HOLD
 // ----------------------------
 
 const POWER_HOLD_TIME = 1000;
@@ -90,6 +98,7 @@ function startPowerHold(event) {
   event.preventDefault();
 
   powerTriggered = false;
+
   powerButton.classList.add("holding");
 
   powerHoldTimer = setTimeout(() => {
@@ -97,6 +106,7 @@ function startPowerHold(event) {
     powerHoldTimer = null;
 
     powerButton.classList.remove("holding");
+
     powerButton.classList.add("power-triggered");
 
     sendCommand("power");
@@ -119,9 +129,119 @@ function cancelPowerHold() {
 }
 
 powerButton.addEventListener("pointerdown", startPowerHold);
+
 powerButton.addEventListener("pointerup", cancelPowerHold);
+
 powerButton.addEventListener("pointerleave", cancelPowerHold);
+
 powerButton.addEventListener("pointercancel", cancelPowerHold);
+
+// ----------------------------
+// COMMAND BUTTONS
+// ----------------------------
+
+const commandButtons = document.querySelectorAll("[data-command]");
+
+commandButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const command = button.dataset.command;
+
+    if (command === "power" || command === "input") {
+      return;
+    }
+
+    sendCommand(command);
+  });
+});
+
+// ----------------------------
+// INPUT PANEL
+// ----------------------------
+
+const KEYBOARD_SENTINEL = " ";
+
+function resetKeyboardInput() {
+  keyboardInput.value = KEYBOARD_SENTINEL;
+
+  keyboardInput.setSelectionRange(
+    KEYBOARD_SENTINEL.length,
+    KEYBOARD_SENTINEL.length,
+  );
+}
+
+inputButton.addEventListener("click", () => {
+  inputPanel.classList.add("open");
+
+  resetKeyboardInput();
+
+  /*
+      Focus happens directly inside the tap
+      event so Android opens its keyboard.
+    */
+  keyboardInput.focus();
+});
+
+closeInputPanel.addEventListener("click", () => {
+  keyboardInput.blur();
+
+  inputPanel.classList.remove("open");
+});
+
+// ----------------------------
+// REMOTE KEYBOARD
+// ----------------------------
+
+keyboardInput.addEventListener("focus", () => {
+  resetKeyboardInput();
+});
+
+keyboardInput.addEventListener("beforeinput", (event) => {
+  const inputType = event.inputType;
+
+  // BACKSPACE
+  if (inputType === "deleteContentBackward") {
+    event.preventDefault();
+
+    sendSocketCommand({
+      command: "backspace",
+      count: 1,
+    });
+
+    resetKeyboardInput();
+
+    return;
+  }
+
+  // ENTER
+  if (inputType === "insertLineBreak" || inputType === "insertParagraph") {
+    event.preventDefault();
+
+    sendSocketCommand({
+      command: "key-press",
+      key: "enter",
+    });
+
+    resetKeyboardInput();
+
+    return;
+  }
+
+  // NORMAL TEXT
+  if (inputType === "insertText" || inputType === "insertCompositionText") {
+    if (!event.data) {
+      return;
+    }
+
+    event.preventDefault();
+
+    sendSocketCommand({
+      command: "type-text",
+      text: event.data,
+    });
+
+    resetKeyboardInput();
+  }
+});
 
 // ----------------------------
 // MOUSE MOVEMENT
@@ -135,16 +255,20 @@ function sendMouseMove(dx, dy) {
   pendingMouseX += dx;
   pendingMouseY += dy;
 
-  if (mouseSendScheduled) return;
+  if (mouseSendScheduled) {
+    return;
+  }
 
   mouseSendScheduled = true;
 
   requestAnimationFrame(() => {
     const moveX = pendingMouseX;
+
     const moveY = pendingMouseY;
 
     pendingMouseX = 0;
     pendingMouseY = 0;
+
     mouseSendScheduled = false;
 
     sendSocketCommand({
@@ -156,98 +280,7 @@ function sendMouseMove(dx, dy) {
 }
 
 // ----------------------------
-// SCROLL
-// ----------------------------
-
-function sendScroll(delta) {
-  sendSocketCommand({
-    command: "scroll",
-    delta: delta,
-  });
-}
-
-// ----------------------------
-// COMMAND BUTTONS
-// ----------------------------
-
-const commandButtons = document.querySelectorAll("[data-command]");
-
-commandButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const command = button.dataset.command;
-
-    // Power uses long-hold behaviour instead.
-    if (command === "power") {
-      return;
-    }
-
-    // Input panel opens locally.
-    if (command === "input") {
-      return;
-    }
-
-    sendCommand(command);
-  });
-});
-
-// ----------------------------
-// INPUT PANEL
-// ----------------------------
-
-inputButton.addEventListener("click", () => {
-  inputPanel.classList.add("open");
-});
-
-closeInputPanel.addEventListener("click", () => {
-  inputPanel.classList.remove("open");
-});
-
-// ----------------------------
-// KEYBOARD
-// ----------------------------
-
-let lastKeyboardValue = "";
-
-keyboardInput.addEventListener("input", (event) => {
-  const currentValue = event.target.value;
-
-  // New characters typed
-  if (currentValue.length > lastKeyboardValue.length) {
-    const newText = currentValue.slice(lastKeyboardValue.length);
-
-    sendSocketCommand({
-      command: "type-text",
-      text: newText,
-    });
-  }
-
-  // Characters deleted
-  if (currentValue.length < lastKeyboardValue.length) {
-    const deletedCount = lastKeyboardValue.length - currentValue.length;
-
-    sendSocketCommand({
-      command: "backspace",
-      count: deletedCount,
-    });
-  }
-
-  lastKeyboardValue = currentValue;
-});
-
-// Enter / Send
-keyboardInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-
-    sendSocketCommand({
-      command: "key-press",
-      key: "enter",
-    });
-  }
-});
-
-// ----------------------------
-// ONE-FINGER TRACKPAD MOVEMENT
+// ONE-FINGER TRACKPAD
 // ----------------------------
 
 let activePointerId = null;
@@ -255,31 +288,42 @@ let lastPointerX = null;
 let lastPointerY = null;
 
 trackpad.addEventListener("pointerdown", (event) => {
-  if (activePointerId !== null) return;
+  if (activePointerId !== null) {
+    return;
+  }
 
   activePointerId = event.pointerId;
+
   lastPointerX = event.clientX;
+
   lastPointerY = event.clientY;
 
   trackpad.setPointerCapture(event.pointerId);
 });
 
 trackpad.addEventListener("pointermove", (event) => {
-  if (event.pointerId !== activePointerId) return;
+  if (event.pointerId !== activePointerId) {
+    return;
+  }
 
   const deltaX = event.clientX - lastPointerX;
+
   const deltaY = event.clientY - lastPointerY;
 
   sendMouseMove(deltaX, deltaY);
 
   lastPointerX = event.clientX;
+
   lastPointerY = event.clientY;
 });
 
 function endPointer(event) {
-  if (event.pointerId !== activePointerId) return;
+  if (event.pointerId !== activePointerId) {
+    return;
+  }
 
   activePointerId = null;
+
   lastPointerX = null;
   lastPointerY = null;
 
@@ -291,6 +335,7 @@ function endPointer(event) {
 }
 
 trackpad.addEventListener("pointerup", endPointer);
+
 trackpad.addEventListener("pointercancel", endPointer);
 
 // ----------------------------
@@ -299,6 +344,13 @@ trackpad.addEventListener("pointercancel", endPointer);
 
 let lastTwoFingerY = null;
 
+function sendScroll(delta) {
+  sendSocketCommand({
+    command: "scroll",
+    delta,
+  });
+}
+
 trackpad.addEventListener(
   "touchstart",
   (event) => {
@@ -306,6 +358,7 @@ trackpad.addEventListener(
       event.preventDefault();
 
       const y1 = event.touches[0].clientY;
+
       const y2 = event.touches[1].clientY;
 
       lastTwoFingerY = (y1 + y2) / 2;
@@ -315,17 +368,22 @@ trackpad.addEventListener(
       lastPointerY = null;
     }
   },
-  { passive: false },
+  {
+    passive: false,
+  },
 );
 
 trackpad.addEventListener(
   "touchmove",
   (event) => {
-    if (event.touches.length !== 2) return;
+    if (event.touches.length !== 2) {
+      return;
+    }
 
     event.preventDefault();
 
     const y1 = event.touches[0].clientY;
+
     const y2 = event.touches[1].clientY;
 
     const currentY = (y1 + y2) / 2;
@@ -338,7 +396,9 @@ trackpad.addEventListener(
 
     lastTwoFingerY = currentY;
   },
-  { passive: false },
+  {
+    passive: false,
+  },
 );
 
 trackpad.addEventListener(
@@ -348,7 +408,9 @@ trackpad.addEventListener(
       lastTwoFingerY = null;
     }
   },
-  { passive: false },
+  {
+    passive: false,
+  },
 );
 
 trackpad.addEventListener(
@@ -356,5 +418,7 @@ trackpad.addEventListener(
   () => {
     lastTwoFingerY = null;
   },
-  { passive: false },
+  {
+    passive: false,
+  },
 );

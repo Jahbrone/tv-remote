@@ -2,11 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
 
     <title>TV Remote</title>
 
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=5" />
   </head>
 
   <body>
@@ -25,8 +29,8 @@
         <div class="volume-controls">
           <button
             class="icon-button volume-button"
-            id="volumeDown"
             data-command="volume-down"
+            aria-label="Volume down"
           >
             −
           </button>
@@ -35,8 +39,8 @@
 
           <button
             class="icon-button volume-button"
-            id="volumeUp"
             data-command="volume-up"
+            aria-label="Volume up"
           >
             +
           </button>
@@ -44,7 +48,6 @@
 
         <button
           class="icon-button desktop-button"
-          id="desktopButton"
           data-command="desktop"
           aria-label="Desktop"
         >
@@ -85,16 +88,17 @@
         <button class="app-button" data-command="retro" aria-label="Retro">
           <img src="img/retro.svg" alt="Retro" />
         </button>
+
         <button
           class="app-button"
           data-command="screensaver"
           aria-label="Screensaver"
         >
-          <img src="img/photo.svg" alt="photo" />
+          <img src="img/photo.svg" alt="Screensaver" />
         </button>
       </section>
 
-      <!-- KEYBOARD / TRACKPAD BUTTON -->
+      <!-- KEYBOARD / TRACKPAD -->
       <footer class="bottom-controls">
         <button
           class="control-button"
@@ -108,12 +112,14 @@
       </footer>
     </main>
 
-    <!-- KEYBOARD + TRACKPAD POPUP -->
+    <!-- INPUT PANEL -->
     <div class="input-panel" id="inputPanel">
       <div class="input-panel-header">
         <span>Keyboard & Trackpad</span>
 
-        <button id="closeInputPanel">✕</button>
+        <button class="close-button" id="closeInputPanel" aria-label="Close">
+          ✕
+        </button>
       </div>
 
       <!-- TRACKPAD -->
@@ -123,32 +129,26 @@
 
       <!-- MOUSE BUTTONS -->
       <div class="mouse-buttons">
-        <button
-          class="mouse-button"
-          id="leftClickButton"
-          data-command="left-click"
-        >
+        <button class="mouse-button" data-command="left-click">
           Left Click
         </button>
 
-        <button
-          class="mouse-button"
-          id="rightClickButton"
-          data-command="right-click"
-        >
+        <button class="mouse-button" data-command="right-click">
           Right Click
         </button>
       </div>
 
-      <!-- KEYBOARD INPUT -->
-      <input
-        type="text"
+      <!-- HIDDEN PHONE KEYBOARD INPUT -->
+      <textarea
         id="keyboardInput"
-        placeholder="Tap here to type"
+        class="hidden-keyboard-input"
         autocomplete="off"
-      />
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      ></textarea>
     </div>
 
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=5"></script>
   </body>
 </html>

@@ -1,11 +1,14 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import asyncio
+import ctypes
 import json
 import os
 import subprocess
 import threading
 import webbrowser
+
+from ctypes import wintypes
 
 import pyautogui
 import websockets
@@ -15,19 +18,134 @@ HOST = "0.0.0.0"
 HTTP_PORT = 8765
 WS_PORT = 8766
 
-MOUSE_SENSITIVITY = 1
+MOUSE_SENSITIVITY = 3.0
 SCROLL_SENSITIVITY = 0.15
 
 
 # ----------------------------
-# MOUSE MOVEMENT
+# WINDOWS NATIVE INPUT
+# ----------------------------
+
+INPUT_MOUSE = 0
+MOUSEEVENTF_MOVE = 0x0001
+MOUSEEVENTF_LEFTDOWN = 0x0002
+MOUSEEVENTF_LEFTUP = 0x0004
+MOUSEEVENTF_RIGHTDOWN = 0x0008
+MOUSEEVENTF_RIGHTUP = 0x0010
+MOUSEEVENTF_WHEEL = 0x0800
+
+ULONG_PTR = (
+    ctypes.c_ulonglong
+    if ctypes.sizeof(ctypes.c_void_p) == 8
+    else ctypes.c_ulong
+)
+
+
+class MOUSEINPUT(ctypes.Structure):
+    _fields_ = [
+        ("dx", wintypes.LONG),
+        ("dy", wintypes.LONG),
+        ("mouseData", wintypes.DWORD),
+        ("dwFlags", wintypes.DWORD),
+        ("time", wintypes.DWORD),
+        ("dwExtraInfo", ULONG_PTR),
+    ]
+
+
+class INPUT_UNION(ctypes.Union):
+    _fields_ = [
+        ("mi", MOUSEINPUT),
+    ]
+
+
+class INPUT(ctypes.Structure):
+    _anonymous_ = ("union",)
+
+    _fields_ = [
+        ("type", wintypes.DWORD),
+        ("union", INPUT_UNION),
+    ]
+
+
+SendInput = ctypes.windll.user32.SendInput
+
+SendInput.argtypes = (
+    wintypes.UINT,
+    ctypes.POINTER(INPUT),
+    ctypes.c_int,
+)
+
+SendInput.restype = wintypes.UINT
+
+
+def send_mouse_input(
+    dx=0,
+    dy=0,
+    mouse_data=0,
+    flags=0,
+):
+    mouse_input = INPUT(
+        type=INPUT_MOUSE,
+        mi=MOUSEINPUT(
+            dx=int(dx),
+            dy=int(dy),
+            mouseData=int(mouse_data),
+            dwFlags=flags,
+            time=0,
+            dwExtraInfo=0,
+        ),
+    )
+
+    SendInput(
+        1,
+        ctypes.byref(mouse_input),
+        ctypes.sizeof(INPUT),
+    )
+
+
+# ----------------------------
+# NATIVE MOUSE
 # ----------------------------
 
 def move_mouse(dx, dy):
-    pyautogui.moveRel(
-        dx * MOUSE_SENSITIVITY,
-        dy * MOUSE_SENSITIVITY,
-        duration=0,
+    send_mouse_input(
+        dx=dx * MOUSE_SENSITIVITY,
+        dy=dy * MOUSE_SENSITIVITY,
+        flags=MOUSEEVENTF_MOVE,
+    )
+
+
+def left_click():
+    send_mouse_input(
+        flags=MOUSEEVENTF_LEFTDOWN,
+    )
+
+    send_mouse_input(
+        flags=MOUSEEVENTF_LEFTUP,
+    )
+
+
+def right_click():
+    send_mouse_input(
+        flags=MOUSEEVENTF_RIGHTDOWN,
+    )
+
+    send_mouse_input(
+        flags=MOUSEEVENTF_RIGHTUP,
+    )
+
+
+def scroll_mouse(delta):
+    wheel_delta = int(
+        -delta * SCROLL_SENSITIVITY * 120
+    )
+
+    if wheel_delta == 0:
+        return
+
+    send_mouse_input(
+        mouse_data=wheel_delta,
+        flags=MOUSEEVENTF_WHEEL,
     )
 
 
@@ -65,11 +183,11 @@ def execute_command(command, data):
         return True
 
     if command == "left-click":
-        pyautogui.click()
+        left_click()
         return True
 
     if command == "right-click":
-        pyautogui.rightClick()
+        right_click()
         return True
 
     if command == "volume-up":
@@ -81,34 +199,55 @@ def execute_command(command, data):
         return True
 
     if command == "steam":
-        steam_path = r"C:\Program Files (x86)\Steam\Steam.exe"
+        steam_path = (
+            r"C:\Program Files (x86)\Steam\Steam.exe"
+        )
 
         if os.path.exists(steam_path):
-            subprocess.Popen([steam_path, "-bigpicture"])
+            subprocess.Popen(
+                [steam_path, "-bigpicture"]
+            )
             return True
 
         print("Steam not found")
         return False
 
     if command == "retro":
-        retroarch_path = r"C:\RetroArch-Win64\retroarch.exe"
+        retroarch_path = (
+            r"C:\RetroArch-Win64\retroarch.exe"
+        )
 
         if os.path.exists(retroarch_path):
-            subprocess.Popen([retroarch_path])
+            subprocess.Popen(
+                [retroarch_path]
+            )
             return True
 
         print("RetroArch not found")
         return False
 
     if command == "screensaver":
-        print("Screensaver command received — not configured yet")
+        print(
+            "Screensaver command received "
+            "— not configured yet"
+        )
         return False
 
     if command == "power":
-        print("Power command received — not configured yet")
-        return False
+        subprocess.run(
+            [
+                "rundll32.exe",
+                "powrprof.dll,SetSuspendState",
+                "0,1,0",
+            ],
+            check=False,
+        )
+        return True
 
-    print(f"No action configured for: {command}")
+    print(
+        f"No action configured for: {command}"
+    )
+
     return False
 
 
@@ -118,11 +257,16 @@ def execute_command(command, data):
 
 class ControlHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header(
+            "Access-Control-Allow-Origin",
+            "*",
+        )
+
         self.send_header(
             "Access-Control-Allow-Methods",
             "POST, OPTIONS",
         )
+
         self.send_header(
             "Access-Control-Allow-Headers",
             "Content-Type",
@@ -141,19 +285,31 @@ class ControlHandler(BaseHTTPRequestHandler):
             return
 
         content_length = int(
-            self.headers.get("Content-Length", 0)
+            self.headers.get(
+                "Content-Length",
+                0,
+            )
         )
 
-        body = self.rfile.read(content_length)
+        body = self.rfile.read(
+            content_length
+        )
 
         try:
             data = json.loads(body)
 
-            command = data.get("command")
+            command = data.get(
+                "command"
+            )
 
-            print(f"Received command: {command}")
+            print(
+                f"Received command: {command}"
+            )
 
-            executed = execute_command(command, data)
+            executed = execute_command(
+                command,
+                data,
+            )
 
             response = {
                 "status": "ok",
@@ -172,7 +328,10 @@ class ControlHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
             self.wfile.write(
-                (json.dumps(response) + "\n").encode()
+                (
+                    json.dumps(response)
+                    + "\n"
+                ).encode()
             )
 
         except json.JSONDecodeError:
@@ -188,7 +347,8 @@ def run_http_server():
     )
 
     print(
-        f"HTTP control server running on port {HTTP_PORT}"
+        f"HTTP control server running "
+        f"on port {HTTP_PORT}"
     )
 
     server.serve_forever()
@@ -205,26 +365,32 @@ async def handle_websocket(websocket):
         async for message in websocket:
             data = json.loads(message)
 
-            command = data.get("command")
+            command = data.get(
+                "command"
+            )
 
             if command == "mouse-move":
                 dx = data.get("dx", 0)
                 dy = data.get("dy", 0)
 
-                move_mouse(dx, dy)
-
-            elif command == "scroll":
-                delta = data.get("delta", 0)
-
-                scroll_amount = int(
-                    -delta * SCROLL_SENSITIVITY
+                move_mouse(
+                    dx,
+                    dy,
                 )
 
-                if scroll_amount != 0:
-                    pyautogui.scroll(scroll_amount)
+            elif command == "scroll":
+                delta = data.get(
+                    "delta",
+                    0,
+                )
+
+                scroll_mouse(delta)
 
             elif command == "type-text":
-                text = data.get("text", "")
+                text = data.get(
+                    "text",
+                    "",
+                )
 
                 if text:
                     pyautogui.write(
@@ -234,29 +400,42 @@ async def handle_websocket(websocket):
 
             elif command == "backspace":
                 count = int(
-                    data.get("count", 1)
+                    data.get(
+                        "count",
+                        1,
+                    )
                 )
 
                 for _ in range(count):
-                    pyautogui.press("backspace")
+                    pyautogui.press(
+                        "backspace"
+                    )
 
             elif command == "key-press":
                 key = data.get("key")
 
                 if key == "enter":
-                    pyautogui.press("enter")
+                    pyautogui.press(
+                        "enter"
+                    )
 
     except websockets.ConnectionClosed:
         pass
 
     except json.JSONDecodeError:
-        print("Invalid WebSocket JSON received")
+        print(
+            "Invalid WebSocket JSON received"
+        )
 
     except Exception as error:
-        print(f"WebSocket error: {error}")
+        print(
+            f"WebSocket error: {error}"
+        )
 
     finally:
-        print("WebSocket disconnected")
+        print(
+            "WebSocket disconnected"
+        )
 
 
 async def run_websocket_server():
@@ -266,7 +445,8 @@ async def run_websocket_server():
         WS_PORT,
     ):
         print(
-            f"WebSocket server running on port {WS_PORT}"
+            f"WebSocket server running "
+            f"on port {WS_PORT}"
         )
 
         await asyncio.Future()
@@ -290,7 +470,9 @@ def main():
         )
 
     except KeyboardInterrupt:
-        print("\nStopping control server...")
+        print(
+            "\nStopping control server..."
+        )
 
 
 if __name__ == "__main__":
