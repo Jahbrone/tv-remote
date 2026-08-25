@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import threading
+import time
 import webbrowser
 
 from ctypes import wintypes
@@ -20,6 +21,176 @@ WS_PORT = 8766
 
 MOUSE_SENSITIVITY = 3.0
 SCROLL_SENSITIVITY = 0.15
+
+EDGE_PATH = (
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+)
+
+PROFILE_ROOT = r"C:\LaptopTV\profiles"
+
+
+# ----------------------------
+# STREAMING SERVICES
+# ----------------------------
+
+STREAMING_SERVICES = {
+    "netflix": {
+        "url": "https://www.netflix.com",
+        "profile": "netflix",
+        "window_titles": ["Netflix"],
+    },
+    "disney": {
+        "url": "https://www.disneyplus.com",
+        "profile": "disney",
+        "window_titles": ["Disney"],
+    },
+    "max": {
+        "url": "https://www.max.com",
+        "profile": "max",
+        "window_titles": ["Max"],
+    },
+    "youtube": {
+        "url": "https://www.youtube.com",
+        "profile": "youtube",
+        "window_titles": ["YouTube"],
+    },
+    "yle": {
+        "url": "https://areena.yle.fi",
+        "profile": "yle",
+        "window_titles": ["Yle Areena", "Areena"],
+    },
+}
+
+
+# ----------------------------
+# WINDOWS WINDOW CONTROL
+# ----------------------------
+
+user32 = ctypes.windll.user32
+
+SW_RESTORE = 9
+
+
+def find_window_by_title(keywords):
+    found_window = None
+
+    @ctypes.WINFUNCTYPE(
+        wintypes.BOOL,
+        wintypes.HWND,
+        wintypes.LPARAM,
+    )
+    def enum_window_callback(hwnd, lparam):
+        nonlocal found_window
+
+        if not user32.IsWindowVisible(hwnd):
+            return True
+
+        length = user32.GetWindowTextLengthW(hwnd)
+
+        if length == 0:
+            return True
+
+        buffer = ctypes.create_unicode_buffer(
+            length + 1
+        )
+
+        user32.GetWindowTextW(
+            hwnd,
+            buffer,
+            length + 1,
+        )
+
+        title = buffer.value.lower()
+
+        for keyword in keywords:
+            if keyword.lower() in title:
+                found_window = hwnd
+                return False
+
+        return True
+
+    user32.EnumWindows(
+        enum_window_callback,
+        0,
+    )
+
+    return found_window
+
+
+def focus_window(hwnd):
+    if not hwnd:
+        return False
+
+    if user32.IsIconic(hwnd):
+        user32.ShowWindow(
+            hwnd,
+            SW_RESTORE,
+        )
+
+    user32.SetForegroundWindow(hwnd)
+
+    return True
+
+
+# ----------------------------
+# EDGE APP LAUNCHER
+# ----------------------------
+
+def launch_streaming_service(service_name):
+    service = STREAMING_SERVICES.get(
+        service_name
+    )
+
+    if not service:
+        return False
+
+    existing_window = find_window_by_title(
+        service["window_titles"]
+    )
+
+    if existing_window:
+        focus_window(existing_window)
+        return True
+
+    if not os.path.exists(EDGE_PATH):
+        return False
+
+    profile_path = os.path.join(
+        PROFILE_ROOT,
+        service["profile"],
+    )
+
+    os.makedirs(
+        profile_path,
+        exist_ok=True,
+    )
+
+    subprocess.Popen(
+        [
+            EDGE_PATH,
+            f'--app={service["url"]}',
+            f"--user-data-dir={profile_path}",
+            "--no-first-run",
+            "--no-default-browser-check",
+        ]
+    )
+
+    # Give Edge time to create the app window.
+    time.sleep(1.5)
+
+    new_window = find_window_by_title(
+        service["window_titles"]
+    )
+
+    if new_window:
+        focus_window(new_window)
+
+        # Allow focus to settle before toggling fullscreen.
+        time.sleep(0.2)
+
+        pyautogui.press("f11")
+
+    return True
 
 
 # ----------------------------
@@ -68,7 +239,7 @@ class INPUT(ctypes.Structure):
     ]
 
 
-SendInput = ctypes.windll.user32.SendInput
+SendInput = user32.SendInput
 
 SendInput.argtypes = (
     wintypes.UINT,
@@ -138,7 +309,9 @@ def right_click():
 
 def scroll_mouse(delta):
     wheel_delta = int(
-        -delta * SCROLL_SENSITIVITY * 120
+        -delta
+        * SCROLL_SENSITIVITY
+        * 120
     )
 
     if wheel_delta == 0:
@@ -151,40 +324,14 @@ def scroll_mouse(delta):
 
 
 # ----------------------------
-# STANDARD HTTP COMMANDS
+# STANDARD COMMANDS
 # ----------------------------
 
 def execute_command(command, data):
-
-    if command == "netflix":
-        webbrowser.open(
-            "https://www.netflix.com"
+    if command in STREAMING_SERVICES:
+        return launch_streaming_service(
+            command
         )
-        return True
-
-    if command == "disney":
-        webbrowser.open(
-            "https://www.disneyplus.com"
-        )
-        return True
-
-    if command == "max":
-        webbrowser.open(
-            "https://www.max.com"
-        )
-        return True
-
-    if command == "youtube":
-        webbrowser.open(
-            "https://www.youtube.com"
-        )
-        return True
-
-    if command == "yle":
-        webbrowser.open(
-            "https://areena.yle.fi"
-        )
-        return True
 
     if command == "web":
         webbrowser.open(
@@ -224,7 +371,6 @@ def execute_command(command, data):
             os.startfile(
                 "steam://open/bigpicture"
             )
-
             return True
 
         except OSError:
@@ -241,7 +387,6 @@ def execute_command(command, data):
             subprocess.Popen(
                 [retroarch_path]
             )
-
             return True
 
         return False
@@ -272,9 +417,6 @@ class ControlHandler(
     BaseHTTPRequestHandler
 ):
 
-    # Prevent BaseHTTPRequestHandler from
-    # writing console logs when running
-    # headless through pythonw.exe.
     def log_message(
         self,
         format,
@@ -304,7 +446,6 @@ class ControlHandler(
         self.end_headers()
 
     def do_POST(self):
-
         if self.path != "/command":
             self.send_response(404)
             self._send_cors_headers()
@@ -323,9 +464,7 @@ class ControlHandler(
         )
 
         try:
-            data = json.loads(
-                body
-            )
+            data = json.loads(body)
 
             command = data.get(
                 "command"
@@ -350,14 +489,11 @@ class ControlHandler(
             )
 
             self._send_cors_headers()
-
             self.end_headers()
 
             self.wfile.write(
                 (
-                    json.dumps(
-                        response
-                    )
+                    json.dumps(response)
                     + "\n"
                 ).encode()
             )
@@ -369,7 +505,6 @@ class ControlHandler(
 
 
 def run_http_server():
-
     server = ThreadingHTTPServer(
         (HOST, HTTP_PORT),
         ControlHandler,
@@ -385,11 +520,8 @@ def run_http_server():
 async def handle_websocket(
     websocket
 ):
-
     try:
-
         async for message in websocket:
-
             data = json.loads(
                 message
             )
@@ -399,7 +531,6 @@ async def handle_websocket(
             )
 
             if command == "mouse-move":
-
                 dx = data.get(
                     "dx",
                     0,
@@ -416,7 +547,6 @@ async def handle_websocket(
                 )
 
             elif command == "scroll":
-
                 delta = data.get(
                     "delta",
                     0,
@@ -427,7 +557,6 @@ async def handle_websocket(
                 )
 
             elif command == "type-text":
-
                 text = data.get(
                     "text",
                     "",
@@ -440,7 +569,6 @@ async def handle_websocket(
                     )
 
             elif command == "backspace":
-
                 count = int(
                     data.get(
                         "count",
@@ -456,7 +584,6 @@ async def handle_websocket(
                     )
 
             elif command == "key-press":
-
                 key = data.get(
                     "key"
                 )
@@ -477,13 +604,11 @@ async def handle_websocket(
 
 
 async def run_websocket_server():
-
     async with websockets.serve(
         handle_websocket,
         HOST,
         WS_PORT,
     ):
-
         await asyncio.Future()
 
 
@@ -492,7 +617,6 @@ async def run_websocket_server():
 # ----------------------------
 
 def main():
-
     http_thread = threading.Thread(
         target=run_http_server,
         daemon=True,
