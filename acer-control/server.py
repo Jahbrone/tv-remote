@@ -84,14 +84,24 @@ def execute_command(command, data):
         steam_path = r"C:\Program Files (x86)\Steam\Steam.exe"
 
         if os.path.exists(steam_path):
-            subprocess.Popen([steam_path])
+            subprocess.Popen([steam_path, "-bigpicture"])
             return True
 
         print("Steam not found")
         return False
 
     if command == "retro":
-        print("Retro command received — not configured yet")
+        retroarch_path = r"C:\RetroArch-Win64\retroarch.exe"
+
+        if os.path.exists(retroarch_path):
+            subprocess.Popen([retroarch_path])
+            return True
+
+        print("RetroArch not found")
+        return False
+
+    if command == "screensaver":
+        print("Screensaver command received — not configured yet")
         return False
 
     if command == "power":
@@ -109,8 +119,14 @@ def execute_command(command, data):
 class ControlHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header(
+            "Access-Control-Allow-Methods",
+            "POST, OPTIONS",
+        )
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Content-Type",
+        )
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -146,10 +162,12 @@ class ControlHandler(BaseHTTPRequestHandler):
             }
 
             self.send_response(200)
+
             self.send_header(
                 "Content-Type",
                 "application/json",
             )
+
             self._send_cors_headers()
             self.end_headers()
 
