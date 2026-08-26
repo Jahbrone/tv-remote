@@ -14,6 +14,8 @@ from ctypes import wintypes
 import pyautogui
 import websockets
 
+from photos import get_all_photos
+
 
 HOST = "0.0.0.0"
 HTTP_PORT = 8765
@@ -27,6 +29,10 @@ EDGE_PATH = (
 )
 
 PROFILE_ROOT = r"C:\LaptopTV\profiles"
+
+SLIDESHOW_URL = (
+    "http://192.168.1.187:8000/slideshow.html"
+)
 
 
 # ----------------------------
@@ -136,16 +142,13 @@ def focus_window(hwnd):
 # EDGE APP LAUNCHER
 # ----------------------------
 
-def launch_streaming_service(service_name):
-    service = STREAMING_SERVICES.get(
-        service_name
-    )
-
-    if not service:
-        return False
-
+def launch_edge_app(
+    url,
+    profile_name,
+    window_titles,
+):
     existing_window = find_window_by_title(
-        service["window_titles"]
+        window_titles
     )
 
     if existing_window:
@@ -157,7 +160,7 @@ def launch_streaming_service(service_name):
 
     profile_path = os.path.join(
         PROFILE_ROOT,
-        service["profile"],
+        profile_name,
     )
 
     os.makedirs(
@@ -168,27 +171,135 @@ def launch_streaming_service(service_name):
     subprocess.Popen(
         [
             EDGE_PATH,
-            f'--app={service["url"]}',
+            f"--app={url}",
             f"--user-data-dir={profile_path}",
             "--no-first-run",
             "--no-default-browser-check",
         ]
     )
 
-    # Give Edge time to create the app window.
     time.sleep(1.5)
 
     new_window = find_window_by_title(
-        service["window_titles"]
+        window_titles
     )
 
     if new_window:
         focus_window(new_window)
 
-        # Allow focus to settle before toggling fullscreen.
         time.sleep(0.2)
 
         pyautogui.press("f11")
+
+    return True
+
+
+def launch_streaming_service(service_name):
+    service = STREAMING_SERVICES.get(
+        service_name
+    )
+
+    if not service:
+        return False
+
+    return launch_edge_app(
+        service["url"],
+        service["profile"],
+        service["window_titles"],
+    )
+
+
+def launch_slideshow():
+    existing_window = find_window_by_title(
+        ["TV Photos"]
+    )
+
+    if existing_window:
+        focus_window(existing_window)
+        return True
+
+    if not os.path.exists(EDGE_PATH):
+        return False
+
+    profile_path = os.path.join(
+        PROFILE_ROOT,
+        "slideshow",
+    )
+
+    os.makedirs(
+        profile_path,
+        exist_ok=True,
+    )
+
+    subprocess.Popen(
+        [
+            EDGE_PATH,
+            f"--app={SLIDESHOW_URL}",
+            f"--user-data-dir={profile_path}",
+            "--no-first-run",
+            "--no-default-browser-check",
+        ]
+    )
+
+    # Wait up to 5 seconds for the
+    # slideshow window to appear.
+    slideshow_window = None
+
+    for _ in range(20):
+        time.sleep(0.25)
+
+        slideshow_window = find_window_by_title(
+            ["TV Photos"]
+        )
+
+        if slideshow_window:
+            break
+
+    if slideshow_window:
+        focus_window(slideshow_window)
+
+        time.sleep(0.4)
+
+        pyautogui.press("f11")
+
+    return True
+
+
+# ----------------------------
+# CLOSE TV EDGE APPS
+# ----------------------------
+
+def close_tv_apps():
+    """
+    Close Edge processes launched using our
+    dedicated C:\\LaptopTV\\profiles directory.
+
+    This leaves normal Edge instances alone.
+    """
+
+    powershell_command = r"""
+Get-CimInstance Win32_Process |
+Where-Object {
+    $_.Name -eq 'msedge.exe' -and
+    $_.CommandLine -like '*C:\LaptopTV\profiles*'
+} |
+ForEach-Object {
+    Stop-Process -Id $_.ProcessId -Force
+}
+"""
+
+    subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-WindowStyle",
+            "Hidden",
+            "-Command",
+            powershell_command,
+        ],
+        check=False,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+    )
 
     return True
 
@@ -392,7 +503,10 @@ def execute_command(command, data):
         return False
 
     if command == "screensaver":
-        return False
+        return launch_slideshow()
+
+    if command == "close-apps":
+        return close_tv_apps()
 
     if command == "power":
         subprocess.run(
@@ -432,7 +546,7 @@ class ControlHandler(
 
         self.send_header(
             "Access-Control-Allow-Methods",
-            "POST, OPTIONS",
+            "GET, POST, OPTIONS",
         )
 
         self.send_header(
@@ -442,6 +556,37 @@ class ControlHandler(
 
     def do_OPTIONS(self):
         self.send_response(204)
+        self._send_cors_headers()
+        self.end_headers()
+
+    def do_GET(self):
+        if self.path == "/photos":
+            photos = get_all_photos()
+
+            response = {
+                "photos": photos,
+            }
+
+            self.send_response(200)
+
+            self.send_header(
+                "Content-Type",
+                "application/json",
+            )
+
+            self._send_cors_headers()
+            self.end_headers()
+
+            self.wfile.write(
+                (
+                    json.dumps(response)
+                    + "\n"
+                ).encode()
+            )
+
+            return
+
+        self.send_response(404)
         self._send_cors_headers()
         self.end_headers()
 

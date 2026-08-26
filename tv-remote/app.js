@@ -2,15 +2,11 @@ const SERVER_URL = "http://192.168.1.187:8765";
 const WEBSOCKET_URL = "ws://192.168.1.187:8766";
 
 const inputButton = document.getElementById("inputButton");
-
 const inputPanel = document.getElementById("inputPanel");
-
 const closeInputPanel = document.getElementById("closeInputPanel");
-
+const openKeyboardButton = document.getElementById("openKeyboardButton");
 const keyboardInput = document.getElementById("keyboardInput");
-
 const trackpad = document.getElementById("trackpad");
-
 const powerButton = document.getElementById("powerButton");
 
 // ----------------------------
@@ -63,7 +59,6 @@ async function sendCommand(command) {
 
     if (!response.ok) {
       console.error(`Server error: ${response.status}`);
-
       return;
     }
 
@@ -80,7 +75,10 @@ async function sendCommand(command) {
 // ----------------------------
 
 function sendSocketCommand(data) {
-  if (controlSocket && controlSocket.readyState === WebSocket.OPEN) {
+  if (
+    controlSocket &&
+    controlSocket.readyState === WebSocket.OPEN
+  ) {
     controlSocket.send(JSON.stringify(data));
   }
 }
@@ -106,7 +104,6 @@ function startPowerHold(event) {
     powerHoldTimer = null;
 
     powerButton.classList.remove("holding");
-
     powerButton.classList.add("power-triggered");
 
     sendCommand("power");
@@ -129,11 +126,8 @@ function cancelPowerHold() {
 }
 
 powerButton.addEventListener("pointerdown", startPowerHold);
-
 powerButton.addEventListener("pointerup", cancelPowerHold);
-
 powerButton.addEventListener("pointerleave", cancelPowerHold);
-
 powerButton.addEventListener("pointercancel", cancelPowerHold);
 
 // ----------------------------
@@ -146,7 +140,10 @@ commandButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const command = button.dataset.command;
 
-    if (command === "power" || command === "input") {
+    if (
+      command === "power" ||
+      command === "input"
+    ) {
       return;
     }
 
@@ -169,22 +166,38 @@ function resetKeyboardInput() {
   );
 }
 
-inputButton.addEventListener("click", () => {
-  inputPanel.classList.add("open");
-
+function showKeyboard() {
   resetKeyboardInput();
-
-  /*
-      Focus happens directly inside the tap
-      event so Android opens its keyboard.
-    */
   keyboardInput.focus();
+}
+
+function hideKeyboard() {
+  keyboardInput.blur();
+}
+
+function keyboardIsOpen() {
+  return document.activeElement === keyboardInput;
+}
+
+inputButton.addEventListener("click", () => {
+  // Always open the trackpad with the phone keyboard hidden.
+  hideKeyboard();
+
+  inputPanel.classList.add("open");
 });
 
 closeInputPanel.addEventListener("click", () => {
-  keyboardInput.blur();
+  hideKeyboard();
 
   inputPanel.classList.remove("open");
+});
+
+openKeyboardButton.addEventListener("click", () => {
+  if (keyboardIsOpen()) {
+    hideKeyboard();
+  } else {
+    showKeyboard();
+  }
 });
 
 // ----------------------------
@@ -213,7 +226,10 @@ keyboardInput.addEventListener("beforeinput", (event) => {
   }
 
   // ENTER
-  if (inputType === "insertLineBreak" || inputType === "insertParagraph") {
+  if (
+    inputType === "insertLineBreak" ||
+    inputType === "insertParagraph"
+  ) {
     event.preventDefault();
 
     sendSocketCommand({
@@ -227,7 +243,10 @@ keyboardInput.addEventListener("beforeinput", (event) => {
   }
 
   // NORMAL TEXT
-  if (inputType === "insertText" || inputType === "insertCompositionText") {
+  if (
+    inputType === "insertText" ||
+    inputType === "insertCompositionText"
+  ) {
     if (!event.data) {
       return;
     }
@@ -263,7 +282,6 @@ function sendMouseMove(dx, dy) {
 
   requestAnimationFrame(() => {
     const moveX = pendingMouseX;
-
     const moveY = pendingMouseY;
 
     pendingMouseX = 0;
@@ -295,7 +313,6 @@ trackpad.addEventListener("pointerdown", (event) => {
   activePointerId = event.pointerId;
 
   lastPointerX = event.clientX;
-
   lastPointerY = event.clientY;
 
   trackpad.setPointerCapture(event.pointerId);
@@ -307,13 +324,11 @@ trackpad.addEventListener("pointermove", (event) => {
   }
 
   const deltaX = event.clientX - lastPointerX;
-
   const deltaY = event.clientY - lastPointerY;
 
   sendMouseMove(deltaX, deltaY);
 
   lastPointerX = event.clientX;
-
   lastPointerY = event.clientY;
 });
 
@@ -335,7 +350,6 @@ function endPointer(event) {
 }
 
 trackpad.addEventListener("pointerup", endPointer);
-
 trackpad.addEventListener("pointercancel", endPointer);
 
 // ----------------------------
@@ -358,7 +372,6 @@ trackpad.addEventListener(
       event.preventDefault();
 
       const y1 = event.touches[0].clientY;
-
       const y2 = event.touches[1].clientY;
 
       lastTwoFingerY = (y1 + y2) / 2;
@@ -383,7 +396,6 @@ trackpad.addEventListener(
     event.preventDefault();
 
     const y1 = event.touches[0].clientY;
-
     const y2 = event.touches[1].clientY;
 
     const currentY = (y1 + y2) / 2;

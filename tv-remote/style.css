@@ -73,7 +73,7 @@ button:active {
 }
 
 .power-button {
-  background: #c62828;
+  background: #b96c6c;
 }
 
 .power-button.holding {
@@ -85,7 +85,7 @@ button:active {
 }
 
 .desktop-button {
-  background: #1565c0;
+  background: #6da3e0;
 }
 
 .volume-controls {
@@ -109,7 +109,7 @@ button:active {
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: #2e7d32;
+  background: #2f5c32;
   font-size: 28px;
   line-height: 1;
 }
@@ -141,6 +141,11 @@ button:active {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.close-apps-button {
+  font-size: 38px;
+  font-weight: 12px;
 }
 
 /* ----------------------------
@@ -196,22 +201,60 @@ button:active {
 .input-panel.open {
   transform: translateY(0);
 }
-
 .input-panel-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  width: 100%;
   margin-bottom: 16px;
-  font-size: 16px;
-  font-weight: 700;
+}
+
+
+.keyboard-toggle-button,
+.close-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keyboard-toggle-button {
+  background: #303030;
+}
+
+.keyboard-toggle-button img {
+  width: 20px;
+  height: 20px;
 }
 
 .close-button {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: #303030;
-  font-size: 18px;
+  background: #fc0404;
+ 
+}
+
+.bottom-controls {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.close-apps-button {
+  width: 160px;
+  height: 44px;
+  border: none;
+  border-radius: 14px;
+  background: #252525;
+  color: #ddd;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 /* ----------------------------
@@ -222,7 +265,7 @@ button:active {
   height: 260px;
   width: 100%;
   background: #2a2a2a;
-  border-radius: 18px;
+  border-radius: 18px 18px 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -242,14 +285,20 @@ button:active {
 .mouse-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 12px;
 }
 
 .mouse-button {
   min-height: 50px;
   border-radius: 14px;
   background: #303030;
+}
+
+.mouse-button:nth-child(1) {
+  border-radius: 0 0 0 14px;
+  border-right: 1px solid #444;
+}
+.mouse-button:nth-child(2) {
+  border-radius: 0 0 14px 0px;
 }
 
 /* ----------------------------
