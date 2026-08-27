@@ -1,3 +1,18 @@
 .DS_Store
 
 .venv/
+
+# Android Studio
+android-app/.idea/
+android-app/.gradle/
+android-app/local.properties
+
+# Android build outputs
+android-app/app/build/
+android-app/build/
+android-app/app/release/
+
+# APK / bundle outputs
+*.apk
+*.aab
+*.dm
