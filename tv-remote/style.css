@@ -30,6 +30,7 @@ button:active {
   transform: scale(0.97);
 }
 
+
 /* ----------------------------
    MAIN REMOTE
 ---------------------------- */
@@ -38,10 +39,51 @@ button:active {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: max(20px, env(safe-area-inset-top)) 20px
+
+  padding:
+    max(20px, env(safe-area-inset-top))
+    20px
     max(20px, env(safe-area-inset-bottom));
+
   gap: 24px;
+
+  transition:
+    filter 0.18s ease;
 }
+
+
+/* ----------------------------
+   CLOSE MODE SCREEN EFFECT
+---------------------------- */
+
+body.close-mode-active::before {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+
+  background: rgba(120, 0, 0, 0.28);
+
+  z-index: 500;
+
+  pointer-events: none;
+}
+
+body.close-mode-active .remote {
+  filter: brightness(0.65);
+}
+
+/*
+  Keep the Close Apps button visually
+  prominent above the red overlay.
+*/
+
+body.close-mode-active .close-apps-button {
+  position: relative;
+  z-index: 501;
+  filter: brightness(1.5);
+}
+
 
 /* ----------------------------
    TOP BAR
@@ -57,7 +99,9 @@ button:active {
 .icon-button {
   width: 64px;
   height: 64px;
+
   border-radius: 18px;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,7 +110,9 @@ button:active {
 .icon-button img {
   width: 28px;
   height: 28px;
+
   object-fit: contain;
+
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -90,11 +136,15 @@ button:active {
 
 .volume-controls {
   height: 64px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   gap: 16px;
+
   background: #1f1f1f;
+
   border-radius: 18px;
 }
 
@@ -108,11 +158,15 @@ button:active {
 .volume-button {
   width: 48px;
   height: 48px;
+
   border-radius: 14px;
+
   background: #2f5c32;
+
   font-size: 28px;
   line-height: 1;
 }
+
 
 /* ----------------------------
    APP GRID
@@ -121,14 +175,19 @@ button:active {
 .app-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+
   gap: 14px;
 }
 
 .app-button {
   aspect-ratio: 1 / 1;
+
   min-width: 0;
+
   background: #252525;
+
   border-radius: 20px;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -137,44 +196,85 @@ button:active {
 .app-button img {
   width: 52%;
   height: 52%;
+
   object-fit: contain;
+
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
 }
 
-.close-apps-button {
-  font-size: 38px;
-  font-weight: 12px;
-}
 
 /* ----------------------------
-   BOTTOM CONTROL
+   BOTTOM CONTROLS
 ---------------------------- */
 
 .bottom-controls {
   margin-top: auto;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 12px;
 }
 
 .control-button {
   width: 100%;
+
   min-height: 64px;
+
   background: #252525;
+
   border-radius: 18px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   gap: 24px;
 }
 
 .control-button img {
   width: 28px;
   height: 28px;
+
   object-fit: contain;
+
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
 }
+
+
+/* ----------------------------
+   CLOSE APPS BUTTON
+---------------------------- */
+
+.close-apps-button {
+  width: 160px;
+  height: 44px;
+  border: none;
+  border-radius: 14px;
+  background: #252525;
+  color: #ddd;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+.close-apps-button.close-mode-active {
+  background: #db3737;
+  color: #fff;
+}
+
 
 /* ----------------------------
    INPUT PANEL
@@ -182,17 +282,22 @@ button:active {
 
 .input-panel {
   position: fixed;
+
   left: 0;
   right: 0;
   bottom: 0;
 
   background: #181818;
 
-  padding: 18px 20px max(20px, env(safe-area-inset-bottom));
+  padding:
+    18px
+    20px
+    max(20px, env(safe-area-inset-bottom));
 
   border-radius: 24px 24px 0 0;
 
   transform: translateY(110%);
+
   transition: transform 0.22s ease;
 
   z-index: 1000;
@@ -201,20 +306,25 @@ button:active {
 .input-panel.open {
   transform: translateY(0);
 }
+
 .input-panel-header {
   display: flex;
+
   justify-content: space-between;
   align-items: center;
+
   width: 100%;
+
   margin-bottom: 16px;
 }
-
 
 .keyboard-toggle-button,
 .close-button {
   width: 30px;
   height: 30px;
+
   border-radius: 50%;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -231,31 +341,8 @@ button:active {
 
 .close-button {
   background: #fc0404;
- 
 }
 
-.bottom-controls {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.close-apps-button {
-  width: 160px;
-  height: 44px;
-  border: none;
-  border-radius: 14px;
-  background: #252525;
-  color: #ddd;
-  font-size: 15px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
 
 /* ----------------------------
    TRACKPAD
@@ -264,19 +351,25 @@ button:active {
 .trackpad {
   height: 260px;
   width: 100%;
+
   background: #2a2a2a;
+
   border-radius: 18px 18px 0 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
 
   color: #777;
+
   font-size: 14px;
 
   touch-action: none;
+
   user-select: none;
   -webkit-user-select: none;
 }
+
 
 /* ----------------------------
    MOUSE BUTTONS
@@ -289,29 +382,30 @@ button:active {
 
 .mouse-button {
   min-height: 50px;
+
   border-radius: 14px;
+
   background: #303030;
 }
 
 .mouse-button:nth-child(1) {
   border-radius: 0 0 0 14px;
+
   border-right: 1px solid #444;
 }
+
 .mouse-button:nth-child(2) {
-  border-radius: 0 0 14px 0px;
+  border-radius: 0 0 14px 0;
 }
+
 
 /* ----------------------------
    HIDDEN KEYBOARD INPUT
 ---------------------------- */
 
-/*
-  This stays focusable so Android can show
-  its native keyboard, but the user never
-  sees a duplicate text box.
-*/
 .hidden-keyboard-input {
   position: fixed;
+
   left: 0;
   bottom: 0;
 
@@ -319,10 +413,12 @@ button:active {
   height: 1px;
 
   opacity: 0.01;
+
   border: 0;
   padding: 0;
   margin: 0;
 
   resize: none;
+
   pointer-events: none;
 }

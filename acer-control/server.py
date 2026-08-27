@@ -28,6 +28,10 @@ EDGE_PATH = (
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 )
 
+RETROARCH_PATH = (
+    r"C:\RetroArch-Win64\retroarch.exe"
+)
+
 PROFILE_ROOT = r"C:\LaptopTV\profiles"
 
 SLIDESHOW_URL = (
@@ -45,25 +49,32 @@ STREAMING_SERVICES = {
         "profile": "netflix",
         "window_titles": ["Netflix"],
     },
+
     "disney": {
         "url": "https://www.disneyplus.com",
         "profile": "disney",
         "window_titles": ["Disney"],
     },
+
     "max": {
         "url": "https://www.max.com",
         "profile": "max",
         "window_titles": ["Max"],
     },
+
     "youtube": {
         "url": "https://www.youtube.com",
         "profile": "youtube",
         "window_titles": ["YouTube"],
     },
+
     "yle": {
         "url": "https://areena.yle.fi",
         "profile": "yle",
-        "window_titles": ["Yle Areena", "Areena"],
+        "window_titles": [
+            "Yle Areena",
+            "Areena",
+        ],
     },
 }
 
@@ -209,6 +220,10 @@ def launch_streaming_service(service_name):
     )
 
 
+# ----------------------------
+# PHOTO SLIDESHOW
+# ----------------------------
+
 def launch_slideshow():
     existing_window = find_window_by_title(
         ["TV Photos"]
@@ -241,8 +256,6 @@ def launch_slideshow():
         ]
     )
 
-    # Wait up to 5 seconds for the
-    # slideshow window to appear.
     slideshow_window = None
 
     for _ in range(20):
@@ -266,17 +279,91 @@ def launch_slideshow():
 
 
 # ----------------------------
-# CLOSE TV EDGE APPS
+# RETROARCH
 # ----------------------------
 
-def close_tv_apps():
-    """
-    Close Edge processes launched using our
-    dedicated C:\\LaptopTV\\profiles directory.
+def launch_retroarch():
+    existing_window = find_window_by_title(
+        ["RetroArch"]
+    )
 
-    This leaves normal Edge instances alone.
-    """
+    if existing_window:
+        focus_window(existing_window)
+        return True
 
+    if not os.path.exists(RETROARCH_PATH):
+        return False
+
+    subprocess.Popen(
+        [RETROARCH_PATH]
+    )
+
+    retro_window = None
+
+    for _ in range(20):
+        time.sleep(0.25)
+
+        retro_window = find_window_by_title(
+            ["RetroArch"]
+        )
+
+        if retro_window:
+            break
+
+    if retro_window:
+        focus_window(retro_window)
+
+        time.sleep(0.4)
+
+        pyautogui.keyDown("altleft")
+        pyautogui.press("enter")
+        pyautogui.keyUp("altleft")
+
+    return True
+
+
+# ----------------------------
+# CLOSE EDGE APP BY PROFILE
+# ----------------------------
+
+def close_edge_profile(profile_name):
+    profile_path = os.path.join(
+        PROFILE_ROOT,
+        profile_name,
+    )
+
+    powershell_command = rf"""
+Get-CimInstance Win32_Process |
+Where-Object {{
+    $_.Name -eq 'msedge.exe' -and
+    $_.CommandLine -like '*{profile_path}*'
+}} |
+ForEach-Object {{
+    Stop-Process -Id $_.ProcessId -Force
+}}
+"""
+
+    subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-WindowStyle",
+            "Hidden",
+            "-Command",
+            powershell_command,
+        ],
+        check=False,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+
+    return True
+
+
+# ----------------------------
+# CLOSE TV APPS
+# ----------------------------
+
+def close_edge_tv_apps():
     powershell_command = r"""
 Get-CimInstance Win32_Process |
 Where-Object {
@@ -301,7 +388,77 @@ ForEach-Object {
         creationflags=subprocess.CREATE_NO_WINDOW,
     )
 
+
+def close_steam():
+    subprocess.run(
+        [
+            "taskkill",
+            "/IM",
+            "steam.exe",
+            "/T",
+            "/F",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+
     return True
+
+
+def close_retroarch():
+    subprocess.run(
+        [
+            "taskkill",
+            "/IM",
+            "retroarch.exe",
+            "/T",
+            "/F",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+
+    return True
+
+
+def close_tv_apps():
+    close_edge_tv_apps()
+    close_steam()
+    close_retroarch()
+
+    return True
+
+
+# ----------------------------
+# SELECTIVE CLOSE
+# ----------------------------
+
+def close_single_app(app_name):
+    if app_name in STREAMING_SERVICES:
+        profile_name = STREAMING_SERVICES[
+            app_name
+        ]["profile"]
+
+        return close_edge_profile(
+            profile_name
+        )
+
+    if app_name == "screensaver":
+        return close_edge_profile(
+            "slideshow"
+        )
+
+    if app_name == "steam":
+        return close_steam()
+
+    if app_name == "retro":
+        return close_retroarch()
+
+    return False
 
 
 # ----------------------------
@@ -482,31 +639,29 @@ def execute_command(command, data):
             os.startfile(
                 "steam://open/bigpicture"
             )
+
             return True
 
         except OSError:
             return False
 
     if command == "retro":
-        retroarch_path = (
-            r"C:\RetroArch-Win64\retroarch.exe"
-        )
-
-        if os.path.exists(
-            retroarch_path
-        ):
-            subprocess.Popen(
-                [retroarch_path]
-            )
-            return True
-
-        return False
+        return launch_retroarch()
 
     if command == "screensaver":
         return launch_slideshow()
 
     if command == "close-apps":
         return close_tv_apps()
+
+    if command.startswith("close-"):
+        app_name = command.removeprefix(
+            "close-"
+        )
+
+        return close_single_app(
+            app_name
+        )
 
     if command == "power":
         subprocess.run(

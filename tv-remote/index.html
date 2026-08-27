@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -16,7 +17,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
-    <link rel="stylesheet" href="style.css?v=6" />
+    <link rel="stylesheet" href="style.css?v=1.0.3" />
   </head>
 
   <body>
@@ -63,67 +64,35 @@
 
       <!-- SERVICES -->
       <section class="app-grid">
-        <button
-          class="app-button"
-          data-command="netflix"
-          aria-label="Netflix"
-        >
+        <button class="app-button" data-command="netflix" aria-label="Netflix">
           <img src="img/netflix.svg" alt="Netflix" />
         </button>
 
-        <button
-          class="app-button"
-          data-command="disney"
-          aria-label="Disney+"
-        >
+        <button class="app-button" data-command="disney" aria-label="Disney+">
           <img src="img/disney.svg" alt="Disney+" />
         </button>
 
-        <button
-          class="app-button"
-          data-command="max"
-          aria-label="Max"
-        >
+        <button class="app-button" data-command="max" aria-label="Max">
           <img src="img/hbo.svg" alt="Max" />
         </button>
 
-        <button
-          class="app-button"
-          data-command="youtube"
-          aria-label="YouTube"
-        >
+        <button class="app-button" data-command="youtube" aria-label="YouTube">
           <img src="img/youtube.svg" alt="YouTube" />
         </button>
 
-        <button
-          class="app-button"
-          data-command="yle"
-          aria-label="Yle"
-        >
+        <button class="app-button" data-command="yle" aria-label="Yle">
           <img src="img/yle.svg" alt="Yle" />
         </button>
 
-        <button
-          class="app-button"
-          data-command="web"
-          aria-label="Internet"
-        >
+        <button class="app-button" data-command="web" aria-label="Internet">
           <img src="img/internet.svg" alt="Internet" />
         </button>
 
-        <button
-          class="app-button"
-          data-command="steam"
-          aria-label="Steam"
-        >
+        <button class="app-button" data-command="steam" aria-label="Steam">
           <img src="img/steam.svg" alt="Steam" />
         </button>
 
-        <button
-          class="app-button"
-          data-command="retro"
-          aria-label="Retro"
-        >
+        <button class="app-button" data-command="retro" aria-label="Retro">
           <img src="img/retro.svg" alt="Retro" />
         </button>
 
@@ -140,7 +109,7 @@
       <footer class="bottom-controls">
         <button
           class="app-button close-apps-button"
-          data-command="close-apps"
+          id="closeAppsButton"
           aria-label="Close Apps"
         >
           CLOSE APPS
@@ -149,7 +118,6 @@
         <button
           class="control-button"
           id="inputButton"
-          data-command="input"
           aria-label="Keyboard and Trackpad"
         >
           <img src="img/keyboard.svg" alt="" />
@@ -160,8 +128,6 @@
 
     <!-- INPUT PANEL -->
     <div class="input-panel" id="inputPanel">
-
-      <!-- KEYBOARD LEFT / CLOSE RIGHT -->
       <div class="input-panel-header">
         <button
           class="keyboard-toggle-button"
@@ -171,11 +137,7 @@
           <img src="img/keyboard.svg" alt="" />
         </button>
 
-        <button
-          class="close-button"
-          id="closeInputPanel"
-          aria-label="Close"
-        >
+        <button class="close-button" id="closeInputPanel" aria-label="Close">
           ✕
         </button>
       </div>
@@ -187,17 +149,11 @@
 
       <!-- MOUSE BUTTONS -->
       <div class="mouse-buttons">
-        <button
-          class="mouse-button"
-          data-command="left-click"
-        >
+        <button class="mouse-button" data-command="left-click">
           Left Click
         </button>
 
-        <button
-          class="mouse-button"
-          data-command="right-click"
-        >
+        <button class="mouse-button" data-command="right-click">
           Right Click
         </button>
       </div>
@@ -213,14 +169,6 @@
       ></textarea>
     </div>
 
-    <script src="app.js?v=7"></script>
-
-    <!--
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js");
-      }
-    </script>
-    -->
+    <script src="app.js?v=1.0.3"></script>
   </body>
 </html>
