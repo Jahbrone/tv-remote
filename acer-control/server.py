@@ -86,6 +86,12 @@ STREAMING_SERVICES = {
 user32 = ctypes.windll.user32
 
 SW_RESTORE = 9
+SW_MINIMIZE = 6
+
+VK_MEDIA_PLAY_PAUSE = 0xB3
+
+KEYEVENTF_EXTENDEDKEY = 0x0001
+KEYEVENTF_KEYUP = 0x0002
 
 
 def find_window_by_title(keywords):
@@ -149,6 +155,47 @@ def focus_window(hwnd):
     return True
 
 
+def minimise_active_window():
+    hwnd = user32.GetForegroundWindow()
+
+    if not hwnd:
+        return False
+
+    user32.ShowWindow(
+        hwnd,
+        SW_MINIMIZE,
+    )
+
+    return True
+
+
+def toggle_fullscreen():
+    pyautogui.press(
+        "f11"
+    )
+
+    return True
+
+
+def media_play_pause():
+    user32.keybd_event(
+        VK_MEDIA_PLAY_PAUSE,
+        0,
+        KEYEVENTF_EXTENDEDKEY,
+        0,
+    )
+
+    user32.keybd_event(
+        VK_MEDIA_PLAY_PAUSE,
+        0,
+        KEYEVENTF_EXTENDEDKEY
+        | KEYEVENTF_KEYUP,
+        0,
+    )
+
+    return True
+
+
 # ----------------------------
 # EDGE APP LAUNCHER
 # ----------------------------
@@ -196,16 +243,24 @@ def launch_edge_app(
     )
 
     if new_window:
-        focus_window(new_window)
+        focus_window(
+            new_window
+        )
 
-        time.sleep(0.2)
+        time.sleep(
+            0.2
+        )
 
-        pyautogui.press("f11")
+        pyautogui.press(
+            "f11"
+        )
 
     return True
 
 
-def launch_streaming_service(service_name):
+def launch_streaming_service(
+    service_name
+):
     service = STREAMING_SERVICES.get(
         service_name
     )
@@ -230,10 +285,15 @@ def launch_slideshow():
     )
 
     if existing_window:
-        focus_window(existing_window)
+        focus_window(
+            existing_window
+        )
+
         return True
 
-    if not os.path.exists(EDGE_PATH):
+    if not os.path.exists(
+        EDGE_PATH
+    ):
         return False
 
     profile_path = os.path.join(
@@ -258,8 +318,12 @@ def launch_slideshow():
 
     slideshow_window = None
 
-    for _ in range(20):
-        time.sleep(0.25)
+    for _ in range(
+        20
+    ):
+        time.sleep(
+            0.25
+        )
 
         slideshow_window = find_window_by_title(
             ["TV Photos"]
@@ -269,11 +333,17 @@ def launch_slideshow():
             break
 
     if slideshow_window:
-        focus_window(slideshow_window)
+        focus_window(
+            slideshow_window
+        )
 
-        time.sleep(0.4)
+        time.sleep(
+            0.4
+        )
 
-        pyautogui.press("f11")
+        pyautogui.press(
+            "f11"
+        )
 
     return True
 
@@ -288,10 +358,15 @@ def launch_retroarch():
     )
 
     if existing_window:
-        focus_window(existing_window)
+        focus_window(
+            existing_window
+        )
+
         return True
 
-    if not os.path.exists(RETROARCH_PATH):
+    if not os.path.exists(
+        RETROARCH_PATH
+    ):
         return False
 
     subprocess.Popen(
@@ -300,8 +375,12 @@ def launch_retroarch():
 
     retro_window = None
 
-    for _ in range(20):
-        time.sleep(0.25)
+    for _ in range(
+        20
+    ):
+        time.sleep(
+            0.25
+        )
 
         retro_window = find_window_by_title(
             ["RetroArch"]
@@ -311,13 +390,25 @@ def launch_retroarch():
             break
 
     if retro_window:
-        focus_window(retro_window)
+        focus_window(
+            retro_window
+        )
 
-        time.sleep(0.4)
+        time.sleep(
+            0.4
+        )
 
-        pyautogui.keyDown("altleft")
-        pyautogui.press("enter")
-        pyautogui.keyUp("altleft")
+        pyautogui.keyDown(
+            "altleft"
+        )
+
+        pyautogui.press(
+            "enter"
+        )
+
+        pyautogui.keyUp(
+            "altleft"
+        )
 
     return True
 
@@ -326,7 +417,9 @@ def launch_retroarch():
 # CLOSE EDGE APP BY PROFILE
 # ----------------------------
 
-def close_edge_profile(profile_name):
+def close_edge_profile(
+    profile_name
+):
     profile_path = os.path.join(
         PROFILE_ROOT,
         profile_name,
@@ -437,7 +530,9 @@ def close_tv_apps():
 # SELECTIVE CLOSE
 # ----------------------------
 
-def close_single_app(app_name):
+def close_single_app(
+    app_name
+):
     if app_name in STREAMING_SERVICES:
         profile_name = STREAMING_SERVICES[
             app_name
@@ -476,34 +571,71 @@ MOUSEEVENTF_WHEEL = 0x0800
 
 ULONG_PTR = (
     ctypes.c_ulonglong
-    if ctypes.sizeof(ctypes.c_void_p) == 8
+    if ctypes.sizeof(
+        ctypes.c_void_p
+    ) == 8
     else ctypes.c_ulong
 )
 
 
-class MOUSEINPUT(ctypes.Structure):
+class MOUSEINPUT(
+    ctypes.Structure
+):
     _fields_ = [
-        ("dx", wintypes.LONG),
-        ("dy", wintypes.LONG),
-        ("mouseData", wintypes.DWORD),
-        ("dwFlags", wintypes.DWORD),
-        ("time", wintypes.DWORD),
-        ("dwExtraInfo", ULONG_PTR),
+        (
+            "dx",
+            wintypes.LONG,
+        ),
+        (
+            "dy",
+            wintypes.LONG,
+        ),
+        (
+            "mouseData",
+            wintypes.DWORD,
+        ),
+        (
+            "dwFlags",
+            wintypes.DWORD,
+        ),
+        (
+            "time",
+            wintypes.DWORD,
+        ),
+        (
+            "dwExtraInfo",
+            ULONG_PTR,
+        ),
     ]
 
 
-class INPUT_UNION(ctypes.Union):
+class INPUT_UNION(
+    ctypes.Union
+):
     _fields_ = [
-        ("mi", MOUSEINPUT),
+        (
+            "mi",
+            MOUSEINPUT,
+        ),
     ]
 
 
-class INPUT(ctypes.Structure):
-    _anonymous_ = ("union",)
+class INPUT(
+    ctypes.Structure
+):
+    _anonymous_ = (
+        "union",
+    )
 
     _fields_ = [
-        ("type", wintypes.DWORD),
-        ("union", INPUT_UNION),
+        (
+            "type",
+            wintypes.DWORD,
+        ),
+        (
+            "union",
+            INPUT_UNION,
+        ),
     ]
 
 
@@ -511,11 +643,15 @@ SendInput = user32.SendInput
 
 SendInput.argtypes = (
     wintypes.UINT,
-    ctypes.POINTER(INPUT),
+    ctypes.POINTER(
+        INPUT
+    ),
     ctypes.c_int,
 )
 
-SendInput.restype = wintypes.UINT
+SendInput.restype = (
+    wintypes.UINT
+)
 
 
 def send_mouse_input(
@@ -529,7 +665,9 @@ def send_mouse_input(
         mi=MOUSEINPUT(
             dx=int(dx),
             dy=int(dy),
-            mouseData=int(mouse_data),
+            mouseData=int(
+                mouse_data
+            ),
             dwFlags=flags,
             time=0,
             dwExtraInfo=0,
@@ -538,8 +676,12 @@ def send_mouse_input(
 
     SendInput(
         1,
-        ctypes.byref(mouse_input),
-        ctypes.sizeof(INPUT),
+        ctypes.byref(
+            mouse_input
+        ),
+        ctypes.sizeof(
+            INPUT
+        ),
     )
 
 
@@ -547,10 +689,17 @@ def send_mouse_input(
 # NATIVE MOUSE
 # ----------------------------
 
-def move_mouse(dx, dy):
+def move_mouse(
+    dx,
+    dy
+):
     send_mouse_input(
-        dx=dx * MOUSE_SENSITIVITY,
-        dy=dy * MOUSE_SENSITIVITY,
+        dx=dx
+        * MOUSE_SENSITIVITY,
+
+        dy=dy
+        * MOUSE_SENSITIVITY,
+
         flags=MOUSEEVENTF_MOVE,
     )
 
@@ -575,7 +724,9 @@ def right_click():
     )
 
 
-def scroll_mouse(delta):
+def scroll_mouse(
+    delta
+):
     wheel_delta = int(
         -delta
         * SCROLL_SENSITIVITY
@@ -595,7 +746,10 @@ def scroll_mouse(delta):
 # STANDARD COMMANDS
 # ----------------------------
 
-def execute_command(command, data):
+def execute_command(
+    command,
+    data
+):
     if command in STREAMING_SERVICES:
         return launch_streaming_service(
             command
@@ -605,6 +759,7 @@ def execute_command(command, data):
         webbrowser.open(
             "https://www.google.com"
         )
+
         return True
 
     if command == "desktop":
@@ -612,27 +767,41 @@ def execute_command(command, data):
             "win",
             "d",
         )
+
         return True
 
     if command == "left-click":
         left_click()
+
         return True
 
     if command == "right-click":
         right_click()
+
         return True
 
     if command == "volume-up":
         pyautogui.press(
             "volumeup"
         )
+
         return True
 
     if command == "volume-down":
         pyautogui.press(
             "volumedown"
         )
+
         return True
+
+    if command == "play-pause":
+        return media_play_pause()
+
+    if command == "minimise":
+        return minimise_active_window()
+
+    if command == "fullscreen":
+        return toggle_fullscreen()
 
     if command == "steam":
         try:
@@ -654,7 +823,9 @@ def execute_command(command, data):
     if command == "close-apps":
         return close_tv_apps()
 
-    if command.startswith("close-"):
+    if command.startswith(
+        "close-"
+    ):
         app_name = command.removeprefix(
             "close-"
         )
@@ -693,7 +864,9 @@ class ControlHandler(
     ):
         pass
 
-    def _send_cors_headers(self):
+    def _send_cors_headers(
+        self
+    ):
         self.send_header(
             "Access-Control-Allow-Origin",
             "*",
@@ -709,12 +882,20 @@ class ControlHandler(
             "Content-Type",
         )
 
-    def do_OPTIONS(self):
-        self.send_response(204)
+    def do_OPTIONS(
+        self
+    ):
+        self.send_response(
+            204
+        )
+
         self._send_cors_headers()
+
         self.end_headers()
 
-    def do_GET(self):
+    def do_GET(
+        self
+    ):
         if self.path == "/photos":
             photos = get_all_photos()
 
@@ -722,7 +903,9 @@ class ControlHandler(
                 "photos": photos,
             }
 
-            self.send_response(200)
+            self.send_response(
+                200
+            )
 
             self.send_header(
                 "Content-Type",
@@ -730,26 +913,43 @@ class ControlHandler(
             )
 
             self._send_cors_headers()
+
             self.end_headers()
 
             self.wfile.write(
                 (
-                    json.dumps(response)
+                    json.dumps(
+                        response
+                    )
                     + "\n"
                 ).encode()
             )
 
             return
 
-        self.send_response(404)
+        self.send_response(
+            404
+        )
+
         self._send_cors_headers()
+
         self.end_headers()
 
-    def do_POST(self):
-        if self.path != "/command":
-            self.send_response(404)
+    def do_POST(
+        self
+    ):
+        if (
+            self.path
+            != "/command"
+        ):
+            self.send_response(
+                404
+            )
+
             self._send_cors_headers()
+
             self.end_headers()
+
             return
 
         content_length = int(
@@ -764,7 +964,9 @@ class ControlHandler(
         )
 
         try:
-            data = json.loads(body)
+            data = json.loads(
+                body
+            )
 
             command = data.get(
                 "command"
@@ -781,7 +983,9 @@ class ControlHandler(
                 "executed": executed,
             }
 
-            self.send_response(200)
+            self.send_response(
+                200
+            )
 
             self.send_header(
                 "Content-Type",
@@ -789,24 +993,34 @@ class ControlHandler(
             )
 
             self._send_cors_headers()
+
             self.end_headers()
 
             self.wfile.write(
                 (
-                    json.dumps(response)
+                    json.dumps(
+                        response
+                    )
                     + "\n"
                 ).encode()
             )
 
         except json.JSONDecodeError:
-            self.send_response(400)
+            self.send_response(
+                400
+            )
+
             self._send_cors_headers()
+
             self.end_headers()
 
 
 def run_http_server():
     server = ThreadingHTTPServer(
-        (HOST, HTTP_PORT),
+        (
+            HOST,
+            HTTP_PORT,
+        ),
         ControlHandler,
     )
 

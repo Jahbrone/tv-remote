@@ -30,12 +30,33 @@ const closeAppsButton =
     "closeAppsButton"
   );
 
+const connectionStatus =
+  document.getElementById(
+    "connectionStatus"
+  );
+
 
 // ----------------------------
 // WEBSOCKET CONNECTION
 // ----------------------------
 
 let controlSocket = null;
+
+
+function setConnectionStatus(
+  connected
+) {
+
+  if (!connectionStatus) {
+    return;
+  }
+
+
+  connectionStatus.classList.toggle(
+    "connected",
+    connected
+  );
+}
 
 
 function connectControlSocket() {
@@ -53,6 +74,11 @@ function connectControlSocket() {
       console.log(
         "WebSocket connected"
       );
+
+
+      setConnectionStatus(
+        true
+      );
     }
   );
 
@@ -64,6 +90,12 @@ function connectControlSocket() {
       console.log(
         "WebSocket disconnected"
       );
+
+
+      setConnectionStatus(
+        false
+      );
+
 
       setTimeout(
         connectControlSocket,
@@ -81,9 +113,19 @@ function connectControlSocket() {
         "WebSocket error:",
         error
       );
+
+
+      setConnectionStatus(
+        false
+      );
     }
   );
 }
+
+
+setConnectionStatus(
+  false
+);
 
 
 connectControlSocket();
@@ -314,24 +356,14 @@ function setCloseMode(
   );
 
 
-  if (closeMode) {
+  closeAppsButton.classList.toggle(
+    "close-mode-active",
+    closeMode
+  );
 
-    closeAppsButton.classList.add(
-      "close-mode-active"
-    );
 
-    closeAppsButton.textContent =
-      "SELECT APP TO CLOSE";
-
-  } else {
-
-    closeAppsButton.classList.remove(
-      "close-mode-active"
-    );
-
-    closeAppsButton.textContent =
-      "CLOSE APPS";
-  }
+  closeAppsButton.textContent =
+    "×";
 }
 
 
@@ -777,8 +809,6 @@ trackpad.addEventListener(
     cancelHold();
 
 
-    // HOLD STILL = LEFT CLICK
-
     holdTimer =
       setTimeout(
         () => {
@@ -888,8 +918,6 @@ function endPointer(
 
   cancelHold();
 
-
-  // DOUBLE TAP = LEFT CLICK
 
   if (
     !pointerMoved &&
@@ -1133,8 +1161,6 @@ trackpad.addEventListener(
         currentY -
         lastTwoFingerY;
 
-
-      // REVERSED FROM OLD BEHAVIOUR
 
       sendScroll(
         -delta

@@ -1,28 +1,49 @@
 * {
   box-sizing: border-box;
+  min-width: 0;
+}
+
+/* ----------------------------
+   REMOVE WEBPAGE-LIKE SELECTION
+---------------------------- */
+
+html,
+body,
+.remote,
+.remote * {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 html,
 body {
   margin: 0;
+  padding: 0;
+
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+
   background: #111;
   color: #fff;
+
   font-family: Arial, Helvetica, sans-serif;
+
+  overflow: hidden;
 }
 
 body {
-  min-height: 100dvh;
-  overflow: hidden;
   touch-action: manipulation;
 }
 
 button {
   border: 0;
+
   color: #fff;
   font: inherit;
+
   cursor: pointer;
+
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -30,28 +51,30 @@ button:active {
   transform: scale(0.97);
 }
 
-
 /* ----------------------------
    MAIN REMOTE
 ---------------------------- */
 
 .remote {
-  min-height: 100dvh;
+  position: fixed;
+
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 
   display: flex;
   flex-direction: column;
 
-  padding:
-    max(20px, env(safe-area-inset-top))
-    20px
-    max(20px, env(safe-area-inset-bottom));
+  padding: max(14px, env(safe-area-inset-top)) 14px
+    max(14px, env(safe-area-inset-bottom));
 
-  gap: 18px;
+  gap: 12px;
 
-  transition:
-    filter 0.18s ease;
+  overflow: hidden;
+
+  transition: filter 0.18s ease;
 }
-
 
 /* ----------------------------
    CLOSE MODE SCREEN EFFECT
@@ -82,29 +105,32 @@ body.close-mode-active .close-apps-button {
   filter: brightness(1.5);
 }
 
-
 /* ----------------------------
    TOP BAR
 ---------------------------- */
 
 .top-bar {
+  width: 100%;
+
   display: grid;
 
   grid-template-columns:
-    64px
-    1fr
-    64px;
+    58px
+    minmax(0, 1fr)
+    58px;
 
   align-items: center;
 
-  gap: 16px;
+  gap: 10px;
+
+  flex-shrink: 0;
 }
 
 .icon-button {
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
 
-  border-radius: 18px;
+  border-radius: 16px;
 
   display: flex;
   align-items: center;
@@ -112,8 +138,8 @@ body.close-mode-active .close-apps-button {
 }
 
 .icon-button img {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 
   object-fit: contain;
 
@@ -140,21 +166,22 @@ body.close-mode-active .close-apps-button {
 }
 
 .volume-controls {
-  height: 64px;
+  width: 100%;
+  height: 58px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 16px;
+  gap: 10px;
 
   background: #1f1f1f;
 
-  border-radius: 18px;
+  border-radius: 16px;
 }
 
 .volume-controls span {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 
   letter-spacing: 1px;
@@ -163,43 +190,73 @@ body.close-mode-active .close-apps-button {
 }
 
 .volume-button {
-  width: 48px;
-  height: 48px;
+  width: 43px;
+  height: 43px;
 
-  border-radius: 14px;
+  flex-shrink: 0;
+
+  border-radius: 12px;
 
   background: #2f5c32;
 
-  font-size: 28px;
+  font-size: 25px;
+
   line-height: 1;
 }
 
+.connection-status {
+  width: 8px;
+  height: 8px;
+
+  flex: 0 0 8px;
+
+  border-radius: 50%;
+
+  background: #7a2f2f;
+
+  box-shadow: 0 0 5px rgba(255, 80, 80, 0.4);
+
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.connection-status.connected {
+  background: #55c968;
+
+  box-shadow: 0 0 6px rgba(85, 201, 104, 0.65);
+}
 
 /* ----------------------------
    APP GRID
 ---------------------------- */
 
 .app-grid {
+  width: 100%;
+
   display: grid;
 
-  grid-template-columns:
-    repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
-  gap: 14px;
+  gap: 10px;
+
+  flex-shrink: 0;
 }
 
 .app-button {
-  aspect-ratio: 1 / 1;
+  width: 100%;
 
-  min-width: 0;
+  aspect-ratio: 1 / 1;
 
   background: #252525;
 
-  border-radius: 20px;
+  border-radius: 18px;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  overflow: hidden;
 }
 
 .app-button img {
@@ -214,48 +271,55 @@ body.close-mode-active .close-apps-button {
   -webkit-user-drag: none;
 }
 
-
 /* ----------------------------
    BOTTOM CONTROLS
 ---------------------------- */
 
 .bottom-controls {
-  margin-top: auto;
-
   width: 100%;
+
+  flex: 1 1 0;
+  min-height: 0;
 
   display: flex;
   flex-direction: column;
 
-  gap: 10px;
-}
+  gap: 8px;
 
-.bottom-action-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 10px;
+  overflow: hidden;
 }
-
 
 /* ----------------------------
-   CLOSE APPS
+   UTILITY BUTTON ROW
 ---------------------------- */
 
-.close-apps-button {
-  height: 44px;
+.bottom-action-row {
+  width: 100%;
 
-  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-  border-radius: 14px;
+  gap: 5px;
+
+  flex-shrink: 0;
+}
+
+.utility-button {
+  width: 60px;
+  height: 40px;
+
+  padding: 0;
+
+  flex: 0 0 54px;
+
+  border-radius: 12px;
 
   background: #252525;
 
-  color: #ddd;
-
-  font-size: 15px;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   transition:
     background 0.18s ease,
@@ -263,36 +327,14 @@ body.close-mode-active .close-apps-button {
     filter 0.18s ease;
 }
 
-.close-apps-button.close-mode-active {
-  background: #db3737;
-
-  color: #fff;
-}
-
-
 /* ----------------------------
    KEYBOARD BUTTON
 ---------------------------- */
 
-.keyboard-button {
-  width: 52px;
-  height: 44px;
-
-  border-radius: 14px;
-
-  background: #252525;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .keyboard-button img {
-  width: 24px;
-  height: 24px;
-
+  width: 22px;
+  height: 22px;
   pointer-events: none;
-
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -301,6 +343,67 @@ body.close-mode-active .close-apps-button {
   background: #3b3b3b;
 }
 
+/* ----------------------------
+   PLAY / PAUSE
+---------------------------- */
+
+.play-pause-icon {
+  font-size: 13px;
+
+  letter-spacing: -2px;
+
+  line-height: 1;
+
+  pointer-events: none;
+}
+
+/* ----------------------------
+   MINIMISE
+---------------------------- */
+
+.minimise-button {
+  font-size: 28px;
+
+  line-height: 1;
+}
+
+.minimise-button span {
+  transform: translateY(-4px);
+
+  pointer-events: none;
+}
+
+/* ----------------------------
+   FULLSCREEN
+---------------------------- */
+
+.fullscreen-button {
+  font-size: 24px;
+}
+
+.fullscreen-icon {
+  display: block;
+  line-height: 1;
+  transform: translateY(-1px);
+  pointer-events: none;
+}
+
+/* ----------------------------
+   CLOSE APPS
+---------------------------- */
+
+.close-apps-button {
+  color: #ddd;
+  background-color: #b98686;
+  font-size: 29px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.close-apps-button.close-mode-active {
+  background: #db3737;
+  color: #fff;
+}
 
 /* ----------------------------
    TRACKPAD
@@ -308,64 +411,65 @@ body.close-mode-active .close-apps-button {
 
 .trackpad-shell {
   width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .trackpad {
   width: 100%;
-
-  height: clamp(
-    190px,
-    27dvh,
-    280px
-  );
-
+  flex: 1 1 0;
+  min-height: 0;
   background: #2a2a2a;
-
-  border-radius: 18px 18px 0 0;
-
+  border-radius: 16px 16px 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
-
   color: #777;
-
   font-size: 14px;
-
   touch-action: none;
-
-  user-select: none;
-  -webkit-user-select: none;
+  overflow: hidden;
 }
-
 
 /* ----------------------------
    MOUSE BUTTONS
 ---------------------------- */
 
 .mouse-buttons {
+  width: 100%;
+
   display: grid;
 
   grid-template-columns:
-    1fr 1fr;
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  flex-shrink: 0;
 }
 
 .mouse-button {
-  min-height: 50px;
+  width: 100%;
+
+  min-height: 46px;
+
+  padding: 0 6px;
 
   background: #303030;
+
+  overflow: hidden;
 }
 
 .mouse-button:nth-child(1) {
   border-radius: 0 0 0 14px;
 
-  border-right:
-    1px solid #444;
+  border-right: 1px solid #444;
 }
 
 .mouse-button:nth-child(2) {
   border-radius: 0 0 14px 0;
 }
-
 
 /* ----------------------------
    HIDDEN KEYBOARD INPUT
@@ -389,4 +493,7 @@ body.close-mode-active .close-apps-button {
   resize: none;
 
   pointer-events: none;
+
+  user-select: text;
+  -webkit-user-select: text;
 }
