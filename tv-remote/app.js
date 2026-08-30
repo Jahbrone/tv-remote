@@ -1,29 +1,34 @@
-const SERVER_URL = "http://192.168.1.187:8765";
-const WEBSOCKET_URL = "ws://192.168.1.187:8766";
+const SERVER_URL =
+  "http://192.168.1.187:8765";
 
-const inputButton =
-  document.getElementById("inputButton");
+const WEBSOCKET_URL =
+  "ws://192.168.1.187:8766";
 
-const inputPanel =
-  document.getElementById("inputPanel");
-
-const closeInputPanel =
-  document.getElementById("closeInputPanel");
 
 const openKeyboardButton =
-  document.getElementById("openKeyboardButton");
+  document.getElementById(
+    "openKeyboardButton"
+  );
 
 const keyboardInput =
-  document.getElementById("keyboardInput");
+  document.getElementById(
+    "keyboardInput"
+  );
 
 const trackpad =
-  document.getElementById("trackpad");
+  document.getElementById(
+    "trackpad"
+  );
 
 const powerButton =
-  document.getElementById("powerButton");
+  document.getElementById(
+    "powerButton"
+  );
 
 const closeAppsButton =
-  document.getElementById("closeAppsButton");
+  document.getElementById(
+    "closeAppsButton"
+  );
 
 
 // ----------------------------
@@ -32,35 +37,46 @@ const closeAppsButton =
 
 let controlSocket = null;
 
+
 function connectControlSocket() {
+
   controlSocket =
-    new WebSocket(WEBSOCKET_URL);
+    new WebSocket(
+      WEBSOCKET_URL
+    );
+
 
   controlSocket.addEventListener(
     "open",
     () => {
+
       console.log(
         "WebSocket connected"
       );
     }
   );
 
+
   controlSocket.addEventListener(
     "close",
     () => {
+
       console.log(
         "WebSocket disconnected"
       );
 
-      setTimeout(() => {
-        connectControlSocket();
-      }, 1000);
+      setTimeout(
+        connectControlSocket,
+        1000
+      );
     }
   );
+
 
   controlSocket.addEventListener(
     "error",
     (error) => {
+
       console.error(
         "WebSocket error:",
         error
@@ -69,36 +85,45 @@ function connectControlSocket() {
   );
 }
 
+
 connectControlSocket();
 
 
 // ----------------------------
-// STANDARD HTTP COMMANDS
+// HTTP COMMANDS
 // ----------------------------
 
-async function sendCommand(command) {
+async function sendCommand(
+  command
+) {
+
   console.log(
     `Sending command: ${command}`
   );
 
+
   try {
-    const response = await fetch(
-      `${SERVER_URL}/command`,
-      {
-        method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
+    const response =
+      await fetch(
+        `${SERVER_URL}/command`,
+        {
+          method: "POST",
 
-        body: JSON.stringify({
-          command,
-        }),
-      }
-    );
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            command,
+          }),
+        }
+      );
+
 
     if (!response.ok) {
+
       console.error(
         `Server error: ${response.status}`
       );
@@ -106,8 +131,10 @@ async function sendCommand(command) {
       return;
     }
 
+
     const data =
       await response.json();
+
 
     console.log(
       "Server response:",
@@ -115,6 +142,7 @@ async function sendCommand(command) {
     );
 
   } catch (error) {
+
     console.error(
       "Could not reach control server:",
       error
@@ -127,12 +155,16 @@ async function sendCommand(command) {
 // WEBSOCKET SEND
 // ----------------------------
 
-function sendSocketCommand(data) {
+function sendSocketCommand(
+  data
+) {
+
   if (
     controlSocket &&
     controlSocket.readyState ===
       WebSocket.OPEN
   ) {
+
     controlSocket.send(
       JSON.stringify(data)
     );
@@ -144,13 +176,18 @@ function sendSocketCommand(data) {
 // POWER — LONG HOLD
 // ----------------------------
 
-const POWER_HOLD_TIME = 1000;
+const POWER_HOLD_TIME =
+  1000;
 
 let powerHoldTimer = null;
+
 let powerTriggered = false;
 
 
-function startPowerHold(event) {
+function startPowerHold(
+  event
+) {
+
   event.preventDefault();
 
   powerTriggered = false;
@@ -159,34 +196,53 @@ function startPowerHold(event) {
     "holding"
   );
 
+
   powerHoldTimer =
-    setTimeout(() => {
+    setTimeout(
+      () => {
 
-      powerTriggered = true;
-      powerHoldTimer = null;
+        powerTriggered = true;
 
-      powerButton.classList.remove(
-        "holding"
-      );
+        powerHoldTimer = null;
 
-      powerButton.classList.add(
-        "power-triggered"
-      );
 
-      sendCommand("power");
-
-      setTimeout(() => {
         powerButton.classList.remove(
+          "holding"
+        );
+
+        powerButton.classList.add(
           "power-triggered"
         );
-      }, 300);
 
-    }, POWER_HOLD_TIME);
+
+        sendCommand(
+          "power"
+        );
+
+
+        setTimeout(
+          () => {
+
+            powerButton.classList.remove(
+              "power-triggered"
+            );
+
+          },
+          300
+        );
+
+      },
+      POWER_HOLD_TIME
+    );
 }
 
 
 function cancelPowerHold() {
-  if (powerHoldTimer !== null) {
+
+  if (
+    powerHoldTimer !== null
+  ) {
+
     clearTimeout(
       powerHoldTimer
     );
@@ -194,7 +250,9 @@ function cancelPowerHold() {
     powerHoldTimer = null;
   }
 
+
   if (!powerTriggered) {
+
     powerButton.classList.remove(
       "holding"
     );
@@ -243,13 +301,18 @@ const CLOSEABLE_COMMANDS =
 let closeMode = false;
 
 
-function setCloseMode(enabled) {
+function setCloseMode(
+  enabled
+) {
+
   closeMode = enabled;
+
 
   document.body.classList.toggle(
     "close-mode-active",
     closeMode
   );
+
 
   if (closeMode) {
 
@@ -272,15 +335,13 @@ function setCloseMode(enabled) {
 }
 
 
-// CLOSE APPS only switches close mode
-// on/off. It never directly closes apps.
-
 closeAppsButton.addEventListener(
   "click",
   (event) => {
 
     event.preventDefault();
     event.stopPropagation();
+
 
     setCloseMode(
       !closeMode
@@ -310,7 +371,6 @@ commandButtons.forEach(
           button.dataset.command;
 
 
-        // POWER
         if (
           command === "power"
         ) {
@@ -318,11 +378,11 @@ commandButtons.forEach(
         }
 
 
-        // CLOSE MODE
         if (closeMode) {
 
           event.preventDefault();
           event.stopPropagation();
+
 
           if (
             CLOSEABLE_COMMANDS.has(
@@ -330,26 +390,22 @@ commandButtons.forEach(
             )
           ) {
 
-            const closeCommand =
-              `close-${command}`;
-
-            console.log(
-              `Close mode: ${closeCommand}`
-            );
-
             sendCommand(
-              closeCommand
+              `close-${command}`
             );
 
-            setCloseMode(false);
+            setCloseMode(
+              false
+            );
           }
 
           return;
         }
 
 
-        // NORMAL COMMAND
-        sendCommand(command);
+        sendCommand(
+          command
+        );
       }
     );
   }
@@ -357,16 +413,18 @@ commandButtons.forEach(
 
 
 // ----------------------------
-// INPUT PANEL
+// KEYBOARD
 // ----------------------------
 
-const KEYBOARD_SENTINEL = " ";
+const KEYBOARD_SENTINEL =
+  " ";
 
 
 function resetKeyboardInput() {
 
   keyboardInput.value =
     KEYBOARD_SENTINEL;
+
 
   keyboardInput.setSelectionRange(
     KEYBOARD_SENTINEL.length,
@@ -375,19 +433,8 @@ function resetKeyboardInput() {
 }
 
 
-function showKeyboard() {
-  resetKeyboardInput();
-
-  keyboardInput.focus();
-}
-
-
-function hideKeyboard() {
-  keyboardInput.blur();
-}
-
-
 function keyboardIsOpen() {
+
   return (
     document.activeElement ===
     keyboardInput
@@ -395,30 +442,26 @@ function keyboardIsOpen() {
 }
 
 
-inputButton.addEventListener(
-  "click",
-  () => {
+function showKeyboard() {
 
-    hideKeyboard();
+  resetKeyboardInput();
 
-    inputPanel.classList.add(
-      "open"
-    );
-  }
-);
+  keyboardInput.focus();
+
+  openKeyboardButton.classList.add(
+    "keyboard-open"
+  );
+}
 
 
-closeInputPanel.addEventListener(
-  "click",
-  () => {
+function hideKeyboard() {
 
-    hideKeyboard();
+  keyboardInput.blur();
 
-    inputPanel.classList.remove(
-      "open"
-    );
-  }
-);
+  openKeyboardButton.classList.remove(
+    "keyboard-open"
+  );
+}
 
 
 openKeyboardButton.addEventListener(
@@ -426,26 +469,37 @@ openKeyboardButton.addEventListener(
   () => {
 
     if (keyboardIsOpen()) {
+
       hideKeyboard();
+
     } else {
+
       showKeyboard();
     }
   }
 );
 
 
-// ----------------------------
-// REMOTE KEYBOARD
-// ----------------------------
-
 keyboardInput.addEventListener(
-  "focus",
+  "blur",
   () => {
 
-    resetKeyboardInput();
+    openKeyboardButton.classList.remove(
+      "keyboard-open"
+    );
   }
 );
 
+
+keyboardInput.addEventListener(
+  "focus",
+  resetKeyboardInput
+);
+
+
+// ----------------------------
+// REMOTE KEYBOARD
+// ----------------------------
 
 keyboardInput.addEventListener(
   "beforeinput",
@@ -464,10 +518,14 @@ keyboardInput.addEventListener(
 
       event.preventDefault();
 
+
       sendSocketCommand({
-        command: "backspace",
+        command:
+          "backspace",
+
         count: 1,
       });
+
 
       resetKeyboardInput();
 
@@ -486,10 +544,15 @@ keyboardInput.addEventListener(
 
       event.preventDefault();
 
+
       sendSocketCommand({
-        command: "key-press",
-        key: "enter",
+        command:
+          "key-press",
+
+        key:
+          "enter",
       });
+
 
       resetKeyboardInput();
 
@@ -510,12 +573,18 @@ keyboardInput.addEventListener(
         return;
       }
 
+
       event.preventDefault();
 
+
       sendSocketCommand({
-        command: "type-text",
-        text: event.data,
+        command:
+          "type-text",
+
+        text:
+          event.data,
       });
+
 
       resetKeyboardInput();
     }
@@ -540,13 +609,20 @@ function sendMouseMove(
 ) {
 
   pendingMouseX += dx;
+
   pendingMouseY += dy;
 
-  if (mouseSendScheduled) {
+
+  if (
+    mouseSendScheduled
+  ) {
     return;
   }
 
-  mouseSendScheduled = true;
+
+  mouseSendScheduled =
+    true;
+
 
   requestAnimationFrame(
     () => {
@@ -557,19 +633,93 @@ function sendMouseMove(
       const moveY =
         pendingMouseY;
 
+
       pendingMouseX = 0;
+
       pendingMouseY = 0;
 
       mouseSendScheduled =
         false;
 
+
       sendSocketCommand({
-        command: "mouse-move",
-        dx: moveX,
-        dy: moveY,
+        command:
+          "mouse-move",
+
+        dx:
+          moveX,
+
+        dy:
+          moveY,
       });
     }
   );
+}
+
+
+// ----------------------------
+// TRACKPAD CLICK GESTURES
+// ----------------------------
+
+const HOLD_CLICK_TIME =
+  450;
+
+const MOVE_THRESHOLD =
+  8;
+
+const DOUBLE_TAP_TIME =
+  300;
+
+const DOUBLE_TAP_DISTANCE =
+  35;
+
+
+let holdTimer = null;
+
+let pointerStartX = null;
+let pointerStartY = null;
+
+let pointerMoved = false;
+
+let holdTriggered = false;
+
+let lastTapTime = 0;
+
+let lastTapX = null;
+let lastTapY = null;
+
+
+function sendLeftClick() {
+
+  sendSocketCommand({
+    command:
+      "left-click",
+  });
+}
+
+
+function cancelHold() {
+
+  if (
+    holdTimer !== null
+  ) {
+
+    clearTimeout(
+      holdTimer
+    );
+
+    holdTimer = null;
+  }
+}
+
+
+function resetTapHistory() {
+
+  lastTapTime = 0;
+
+  lastTapX = null;
+
+  lastTapY = null;
 }
 
 
@@ -593,8 +743,10 @@ trackpad.addEventListener(
       return;
     }
 
+
     activePointerId =
       event.pointerId;
+
 
     lastPointerX =
       event.clientX;
@@ -602,9 +754,56 @@ trackpad.addEventListener(
     lastPointerY =
       event.clientY;
 
+
+    pointerStartX =
+      event.clientX;
+
+    pointerStartY =
+      event.clientY;
+
+
+    pointerMoved =
+      false;
+
+    holdTriggered =
+      false;
+
+
     trackpad.setPointerCapture(
       event.pointerId
     );
+
+
+    cancelHold();
+
+
+    // HOLD STILL = LEFT CLICK
+
+    holdTimer =
+      setTimeout(
+        () => {
+
+          if (
+            !pointerMoved &&
+            activePointerId ===
+              event.pointerId
+          ) {
+
+            holdTriggered =
+              true;
+
+            resetTapHistory();
+
+            sendLeftClick();
+          }
+
+
+          holdTimer =
+            null;
+
+        },
+        HOLD_CLICK_TIME
+      );
   }
 );
 
@@ -620,6 +819,7 @@ trackpad.addEventListener(
       return;
     }
 
+
     const deltaX =
       event.clientX -
       lastPointerX;
@@ -628,10 +828,42 @@ trackpad.addEventListener(
       event.clientY -
       lastPointerY;
 
+
+    const totalMoveX =
+      event.clientX -
+      pointerStartX;
+
+    const totalMoveY =
+      event.clientY -
+      pointerStartY;
+
+
+    const distance =
+      Math.hypot(
+        totalMoveX,
+        totalMoveY
+      );
+
+
+    if (
+      distance >
+      MOVE_THRESHOLD
+    ) {
+
+      pointerMoved =
+        true;
+
+      cancelHold();
+
+      resetTapHistory();
+    }
+
+
     sendMouseMove(
       deltaX,
       deltaY
     );
+
 
     lastPointerX =
       event.clientX;
@@ -642,7 +874,9 @@ trackpad.addEventListener(
 );
 
 
-function endPointer(event) {
+function endPointer(
+  event
+) {
 
   if (
     event.pointerId !==
@@ -651,10 +885,89 @@ function endPointer(event) {
     return;
   }
 
-  activePointerId = null;
 
-  lastPointerX = null;
-  lastPointerY = null;
+  cancelHold();
+
+
+  // DOUBLE TAP = LEFT CLICK
+
+  if (
+    !pointerMoved &&
+    !holdTriggered
+  ) {
+
+    const now =
+      Date.now();
+
+
+    const timeDifference =
+      now -
+      lastTapTime;
+
+
+    const tapDistance =
+      (
+        lastTapX === null ||
+        lastTapY === null
+      )
+
+        ? Infinity
+
+        : Math.hypot(
+            event.clientX -
+              lastTapX,
+
+            event.clientY -
+              lastTapY
+          );
+
+
+    if (
+      timeDifference <=
+        DOUBLE_TAP_TIME &&
+      tapDistance <=
+        DOUBLE_TAP_DISTANCE
+    ) {
+
+      sendLeftClick();
+
+      resetTapHistory();
+
+    } else {
+
+      lastTapTime =
+        now;
+
+      lastTapX =
+        event.clientX;
+
+      lastTapY =
+        event.clientY;
+    }
+  }
+
+
+  activePointerId =
+    null;
+
+  lastPointerX =
+    null;
+
+  lastPointerY =
+    null;
+
+  pointerStartX =
+    null;
+
+  pointerStartY =
+    null;
+
+  pointerMoved =
+    false;
+
+  holdTriggered =
+    false;
+
 
   try {
 
@@ -674,9 +987,37 @@ trackpad.addEventListener(
   endPointer
 );
 
+
 trackpad.addEventListener(
   "pointercancel",
-  endPointer
+  (event) => {
+
+    cancelHold();
+
+    resetTapHistory();
+
+
+    if (
+      event.pointerId ===
+      activePointerId
+    ) {
+
+      activePointerId =
+        null;
+
+      lastPointerX =
+        null;
+
+      lastPointerY =
+        null;
+
+      pointerStartX =
+        null;
+
+      pointerStartY =
+        null;
+    }
+  }
 );
 
 
@@ -687,10 +1028,14 @@ trackpad.addEventListener(
 let lastTwoFingerY = null;
 
 
-function sendScroll(delta) {
+function sendScroll(
+  delta
+) {
 
   sendSocketCommand({
-    command: "scroll",
+    command:
+      "scroll",
+
     delta,
   });
 }
@@ -701,27 +1046,49 @@ trackpad.addEventListener(
   (event) => {
 
     if (
-      event.touches.length === 2
+      event.touches.length !==
+      2
     ) {
-
-      event.preventDefault();
-
-      const y1 =
-        event.touches[0]
-          .clientY;
-
-      const y2 =
-        event.touches[1]
-          .clientY;
-
-      lastTwoFingerY =
-        (y1 + y2) / 2;
-
-      activePointerId = null;
-
-      lastPointerX = null;
-      lastPointerY = null;
+      return;
     }
+
+
+    event.preventDefault();
+
+
+    cancelHold();
+
+    resetTapHistory();
+
+
+    pointerMoved =
+      true;
+
+    holdTriggered =
+      false;
+
+
+    const y1 =
+      event.touches[0]
+        .clientY;
+
+    const y2 =
+      event.touches[1]
+        .clientY;
+
+
+    lastTwoFingerY =
+      (y1 + y2) / 2;
+
+
+    activePointerId =
+      null;
+
+    lastPointerX =
+      null;
+
+    lastPointerY =
+      null;
   },
   {
     passive: false,
@@ -734,12 +1101,15 @@ trackpad.addEventListener(
   (event) => {
 
     if (
-      event.touches.length !== 2
+      event.touches.length !==
+      2
     ) {
       return;
     }
 
+
     event.preventDefault();
+
 
     const y1 =
       event.touches[0]
@@ -749,19 +1119,28 @@ trackpad.addEventListener(
       event.touches[1]
         .clientY;
 
+
     const currentY =
       (y1 + y2) / 2;
 
+
     if (
-      lastTwoFingerY !== null
+      lastTwoFingerY !==
+      null
     ) {
 
       const delta =
         currentY -
         lastTwoFingerY;
 
-      sendScroll(delta);
+
+      // REVERSED FROM OLD BEHAVIOUR
+
+      sendScroll(
+        -delta
+      );
     }
+
 
     lastTwoFingerY =
       currentY;
@@ -777,9 +1156,12 @@ trackpad.addEventListener(
   (event) => {
 
     if (
-      event.touches.length < 2
+      event.touches.length <
+      2
     ) {
-      lastTwoFingerY = null;
+
+      lastTwoFingerY =
+        null;
     }
   },
   {
@@ -792,7 +1174,12 @@ trackpad.addEventListener(
   "touchcancel",
   () => {
 
-    lastTwoFingerY = null;
+    lastTwoFingerY =
+      null;
+
+    cancelHold();
+
+    resetTapHistory();
   },
   {
     passive: false,

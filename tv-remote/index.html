@@ -17,7 +17,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
-    <link rel="stylesheet" href="style.css?v=1.0.3" />
+    <link rel="stylesheet" href="style.css?v=1.0.4" />
   </head>
 
   <body>
@@ -105,58 +105,42 @@
         </button>
       </section>
 
-      <!-- BOTTOM CONTROLS -->
+      <!-- PERMANENT TRACKPAD -->
       <footer class="bottom-controls">
-        <button
-          class="app-button close-apps-button"
-          id="closeAppsButton"
-          aria-label="Close Apps"
-        >
-          CLOSE APPS
-        </button>
+        <div class="bottom-action-row">
+          <button
+            class="keyboard-button"
+            id="openKeyboardButton"
+            aria-label="Keyboard"
+          >
+            <img src="img/keyboard.svg" alt="" />
+            
+          </button>
+          <button
+            class="close-apps-button"
+            id="closeAppsButton"
+            aria-label="Close Apps"
+          >
+            CLOSE APPS
+          </button>
+        </div>
 
-        <button
-          class="control-button"
-          id="inputButton"
-          aria-label="Keyboard and Trackpad"
-        >
-          <img src="img/keyboard.svg" alt="" />
-          <img src="img/mouse.svg" alt="" />
-        </button>
+        <div class="trackpad-shell">
+          <div class="trackpad" id="trackpad">
+            <span>Trackpad</span>
+          </div>
+
+          <div class="mouse-buttons">
+            <button class="mouse-button" data-command="left-click">
+              Left Click
+            </button>
+
+            <button class="mouse-button" data-command="right-click">
+              Right Click
+            </button>
+          </div>
+        </div>
       </footer>
-    </main>
-
-    <!-- INPUT PANEL -->
-    <div class="input-panel" id="inputPanel">
-      <div class="input-panel-header">
-        <button
-          class="keyboard-toggle-button"
-          id="openKeyboardButton"
-          aria-label="Open Keyboard"
-        >
-          <img src="img/keyboard.svg" alt="" />
-        </button>
-
-        <button class="close-button" id="closeInputPanel" aria-label="Close">
-          ✕
-        </button>
-      </div>
-
-      <!-- TRACKPAD -->
-      <div class="trackpad" id="trackpad">
-        <span>Trackpad</span>
-      </div>
-
-      <!-- MOUSE BUTTONS -->
-      <div class="mouse-buttons">
-        <button class="mouse-button" data-command="left-click">
-          Left Click
-        </button>
-
-        <button class="mouse-button" data-command="right-click">
-          Right Click
-        </button>
-      </div>
 
       <!-- HIDDEN PHONE KEYBOARD INPUT -->
       <textarea
@@ -167,8 +151,8 @@
         autocapitalize="off"
         spellcheck="false"
       ></textarea>
-    </div>
+    </main>
 
-    <script src="app.js?v=1.0.3"></script>
+    <script src="app.js?v=1.0.4"></script>
   </body>
 </html>

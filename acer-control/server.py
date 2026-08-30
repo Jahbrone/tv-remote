@@ -856,6 +856,12 @@ async def handle_websocket(
                     delta
                 )
 
+            elif command == "left-click":
+                left_click()
+
+            elif command == "right-click":
+                right_click()
+
             elif command == "type-text":
                 text = data.get(
                     "text",
