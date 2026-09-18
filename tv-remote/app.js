@@ -271,10 +271,6 @@ setConnectionStatus(
 connectControlSocket();
 
 
-// Reconnect immediately when the app/page
-// becomes visible again after Android has
-// suspended it.
-
 document.addEventListener(
   "visibilitychange",
   () => {
@@ -290,9 +286,6 @@ document.addEventListener(
 );
 
 
-// Also reconnect when the WebView/window
-// regains focus.
-
 window.addEventListener(
   "focus",
   () => {
@@ -301,9 +294,6 @@ window.addEventListener(
   }
 );
 
-
-// The pageshow event also catches cases where
-// Android restores the page from memory/cache.
 
 window.addEventListener(
   "pageshow",
@@ -398,11 +388,24 @@ function sendSocketCommand(
   }
 
 
-  // If input is attempted while the socket
-  // isn't available, immediately make sure
-  // a connection attempt is underway.
-
   connectControlSocket();
+}
+
+
+// ----------------------------
+// HAPTIC FEEDBACK
+// ----------------------------
+
+function vibrateClick() {
+
+  if (
+    "vibrate" in navigator
+  ) {
+
+    navigator.vibrate(
+      25
+    );
+  }
 }
 
 
@@ -596,6 +599,15 @@ commandButtons.forEach(
 
 
         if (
+          command === "left-click" ||
+          command === "right-click"
+        ) {
+
+          vibrateClick();
+        }
+
+
+        if (
           command === "power"
         ) {
           return;
@@ -733,8 +745,6 @@ keyboardInput.addEventListener(
       event.inputType;
 
 
-    // BACKSPACE
-
     if (
       inputType ===
       "deleteContentBackward"
@@ -756,8 +766,6 @@ keyboardInput.addEventListener(
       return;
     }
 
-
-    // ENTER
 
     if (
       inputType ===
@@ -783,8 +791,6 @@ keyboardInput.addEventListener(
       return;
     }
 
-
-    // NORMAL TEXT
 
     if (
       inputType ===
@@ -914,6 +920,9 @@ let lastTapY = null;
 
 
 function sendLeftClick() {
+
+  vibrateClick();
+
 
   sendSocketCommand({
     command:

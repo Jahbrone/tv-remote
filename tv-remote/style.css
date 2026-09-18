@@ -348,15 +348,43 @@ body.close-mode-active .close-apps-button {
 ---------------------------- */
 
 .play-pause-icon {
-  font-size: 13px;
+  display: flex;
 
-  letter-spacing: -2px;
+  align-items: center;
+  justify-content: center;
 
-  line-height: 1;
+  gap: 6px;
 
   pointer-events: none;
 }
 
+.play-icon {
+  width: 0;
+  height: 0;
+
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 10px solid #fff;
+}
+
+.pause-icon {
+  display: flex;
+
+  align-items: center;
+
+  gap: 3px;
+}
+
+.pause-icon span {
+  display: block;
+
+  width: 3px;
+  height: 14px;
+
+  border-radius: 1px;
+
+  background: #fff;
+}
 /* ----------------------------
    MINIMISE
 ---------------------------- */

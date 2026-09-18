@@ -17,7 +17,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
-    <link rel="stylesheet" href="style.css?v=1.0.8" />
+    <link rel="stylesheet" href="style.css?v=1.0.9" />
   </head>
 
   <body>
@@ -33,31 +33,31 @@
           <img src="img/power.svg" alt="Power" />
         </button>
 
-       <div class="volume-controls">
-  <button
-    class="icon-button volume-button"
-    data-command="volume-down"
-    aria-label="Volume down"
-  >
-    −
-  </button>
+        <div class="volume-controls">
+          <button
+            class="icon-button volume-button"
+            data-command="volume-down"
+            aria-label="Volume down"
+          >
+            −
+          </button>
 
-  <span>VOL</span>
+          <span>VOL</span>
 
-  <span
-    id="connectionStatus"
-    class="connection-status"
-    aria-label="Connection status"
-  ></span>
+          <span
+            id="connectionStatus"
+            class="connection-status"
+            aria-label="Connection status"
+          ></span>
 
-  <button
-    class="icon-button volume-button"
-    data-command="volume-up"
-    aria-label="Volume up"
-  >
-    +
-  </button>
-</div>
+          <button
+            class="icon-button volume-button"
+            data-command="volume-up"
+            aria-label="Volume up"
+          >
+            +
+          </button>
+        </div>
 
         <button
           class="icon-button desktop-button"
@@ -131,13 +131,21 @@
           >
             <span class="fullscreen-icon">⛶</span>
           </button>
+
           <!-- PLAY / PAUSE -->
           <button
             class="utility-button"
             data-command="play-pause"
             aria-label="Play or pause"
           >
-            <span class="play-pause-icon">▶❚❚</span>
+            <span class="play-pause-icon" aria-hidden="true">
+              <span class="play-icon"></span>
+
+              <span class="pause-icon">
+                <span></span>
+                <span></span>
+              </span>
+            </span>
           </button>
 
           <!-- MINIMISE -->
@@ -188,6 +196,6 @@
       ></textarea>
     </main>
 
-    <script src="app.js?v=1.0.8"></script>
+    <script src="app.js?v=1.0.9"></script>
   </body>
 </html>
