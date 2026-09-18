@@ -385,6 +385,7 @@ body.close-mode-active .close-apps-button {
 
   background: #fff;
 }
+
 /* ----------------------------
    MINIMISE
 ---------------------------- */
@@ -447,18 +448,71 @@ body.close-mode-active .close-apps-button {
 }
 
 .trackpad {
+  position: relative;
+
   width: 100%;
   flex: 1 1 0;
   min-height: 0;
+
   background: #2a2a2a;
+
   border-radius: 16px 16px 0 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   color: #777;
   font-size: 14px;
+
   touch-action: none;
+
   overflow: hidden;
+}
+
+/* ----------------------------
+   TRACKPAD CLICK FEEDBACK
+---------------------------- */
+
+.trackpad-click-ring {
+  position: absolute;
+
+  width: 18px;
+  height: 18px;
+
+  border: 2px solid rgba(255, 255, 255, 0.75);
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  transform:
+    translate(-50%, -50%)
+    scale(0.5);
+
+  animation:
+    trackpad-click
+    280ms
+    ease-out
+    forwards;
+}
+
+@keyframes trackpad-click {
+  from {
+    opacity: 1;
+
+    transform:
+      translate(-50%, -50%)
+      scale(0.5);
+  }
+
+  to {
+    opacity: 0;
+
+    transform:
+      translate(-50%, -50%)
+      scale(2);
+  }
 }
 
 /* ----------------------------

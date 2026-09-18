@@ -393,19 +393,72 @@ function sendSocketCommand(
 
 
 // ----------------------------
-// HAPTIC FEEDBACK
+// TRACKPAD CLICK FEEDBACK
 // ----------------------------
 
-function vibrateClick() {
+function showClickFeedback(
+  clientX,
+  clientY
+) {
 
-  if (
-    "vibrate" in navigator
-  ) {
+  const rect =
+    trackpad.getBoundingClientRect();
 
-    navigator.vibrate(
-      25
+
+  const x =
+    clientX - rect.left;
+
+  const y =
+    clientY - rect.top;
+
+
+  const ring =
+    document.createElement(
+      "span"
     );
-  }
+
+
+  ring.className =
+    "trackpad-click-ring";
+
+
+  ring.style.left =
+    `${x}px`;
+
+  ring.style.top =
+    `${y}px`;
+
+
+  trackpad.appendChild(
+    ring
+  );
+
+
+  ring.addEventListener(
+    "animationend",
+    () => {
+
+      ring.remove();
+    },
+    {
+      once: true,
+    }
+  );
+
+
+  setTimeout(
+    () => {
+
+      if (
+        ring.isConnected
+      ) {
+
+        ring.remove();
+      }
+
+    },
+    500
+  );
 }
 
 
@@ -596,15 +649,6 @@ commandButtons.forEach(
 
         const command =
           button.dataset.command;
-
-
-        if (
-          command === "left-click" ||
-          command === "right-click"
-        ) {
-
-          vibrateClick();
-        }
 
 
         if (
@@ -919,9 +963,15 @@ let lastTapX = null;
 let lastTapY = null;
 
 
-function sendLeftClick() {
+function sendLeftClick(
+  clientX,
+  clientY
+) {
 
-  vibrateClick();
+  showClickFeedback(
+    clientX,
+    clientY
+  );
 
 
   sendSocketCommand({
@@ -1010,6 +1060,13 @@ trackpad.addEventListener(
     cancelHold();
 
 
+    const holdX =
+      event.clientX;
+
+    const holdY =
+      event.clientY;
+
+
     holdTimer =
       setTimeout(
         () => {
@@ -1025,7 +1082,10 @@ trackpad.addEventListener(
 
             resetTapHistory();
 
-            sendLeftClick();
+            sendLeftClick(
+              holdX,
+              holdY
+            );
           }
 
 
@@ -1158,7 +1218,10 @@ function endPointer(
         DOUBLE_TAP_DISTANCE
     ) {
 
-      sendLeftClick();
+      sendLeftClick(
+        event.clientX,
+        event.clientY
+      );
 
       resetTapHistory();
 
