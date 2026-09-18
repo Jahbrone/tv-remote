@@ -470,6 +470,22 @@ body.close-mode-active .close-apps-button {
   overflow: hidden;
 }
 
+.trackpad::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background-image: url("img/trackpad-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  opacity: 0.09;
+
+  pointer-events: none;
+}
+
 /* ----------------------------
    TRACKPAD CLICK FEEDBACK
 ---------------------------- */
