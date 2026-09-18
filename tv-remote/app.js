@@ -42,6 +42,10 @@ const connectionStatus =
 
 let controlSocket = null;
 
+let reconnectTimer = null;
+
+const RECONNECT_DELAY = 500;
+
 
 function setConnectionStatus(
   connected
@@ -59,21 +63,114 @@ function setConnectionStatus(
 }
 
 
-function connectControlSocket() {
+function clearReconnectTimer() {
 
-  controlSocket =
+  if (
+    reconnectTimer !== null
+  ) {
+
+    clearTimeout(
+      reconnectTimer
+    );
+
+    reconnectTimer = null;
+  }
+}
+
+
+function scheduleReconnect() {
+
+  if (
+    reconnectTimer !== null
+  ) {
+    return;
+  }
+
+
+  reconnectTimer =
+    setTimeout(
+      () => {
+
+        reconnectTimer = null;
+
+        connectControlSocket();
+
+      },
+      RECONNECT_DELAY
+    );
+}
+
+
+function connectControlSocket(
+  forceReconnect = false
+) {
+
+  clearReconnectTimer();
+
+
+  if (controlSocket) {
+
+    if (
+      !forceReconnect &&
+      (
+        controlSocket.readyState ===
+          WebSocket.OPEN ||
+        controlSocket.readyState ===
+          WebSocket.CONNECTING
+      )
+    ) {
+
+      return;
+    }
+
+
+    try {
+
+      controlSocket.close();
+
+    } catch {
+
+      // Socket was already closed.
+    }
+
+
+    controlSocket = null;
+  }
+
+
+  setConnectionStatus(
+    false
+  );
+
+
+  const socket =
     new WebSocket(
       WEBSOCKET_URL
     );
 
 
-  controlSocket.addEventListener(
+  controlSocket =
+    socket;
+
+
+  socket.addEventListener(
     "open",
     () => {
+
+      if (
+        controlSocket !==
+        socket
+      ) {
+        return;
+      }
+
 
       console.log(
         "WebSocket connected"
       );
+
+
+      clearReconnectTimer();
 
 
       setConnectionStatus(
@@ -83,13 +180,25 @@ function connectControlSocket() {
   );
 
 
-  controlSocket.addEventListener(
+  socket.addEventListener(
     "close",
     () => {
+
+      if (
+        controlSocket !==
+        socket
+      ) {
+        return;
+      }
+
 
       console.log(
         "WebSocket disconnected"
       );
+
+
+      controlSocket =
+        null;
 
 
       setConnectionStatus(
@@ -97,17 +206,22 @@ function connectControlSocket() {
       );
 
 
-      setTimeout(
-        connectControlSocket,
-        1000
-      );
+      scheduleReconnect();
     }
   );
 
 
-  controlSocket.addEventListener(
+  socket.addEventListener(
     "error",
     (error) => {
+
+      if (
+        controlSocket !==
+        socket
+      ) {
+        return;
+      }
+
 
       console.error(
         "WebSocket error:",
@@ -118,7 +232,33 @@ function connectControlSocket() {
       setConnectionStatus(
         false
       );
+
+
+      try {
+
+        socket.close();
+
+      } catch {
+
+        // Socket was already closed.
+      }
     }
+  );
+}
+
+
+function reconnectControlSocket() {
+
+  if (
+    document.visibilityState !==
+    "visible"
+  ) {
+    return;
+  }
+
+
+  connectControlSocket(
+    true
   );
 }
 
@@ -129,6 +269,49 @@ setConnectionStatus(
 
 
 connectControlSocket();
+
+
+// Reconnect immediately when the app/page
+// becomes visible again after Android has
+// suspended it.
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if (
+      document.visibilityState ===
+      "visible"
+    ) {
+
+      reconnectControlSocket();
+    }
+  }
+);
+
+
+// Also reconnect when the WebView/window
+// regains focus.
+
+window.addEventListener(
+  "focus",
+  () => {
+
+    reconnectControlSocket();
+  }
+);
+
+
+// The pageshow event also catches cases where
+// Android restores the page from memory/cache.
+
+window.addEventListener(
+  "pageshow",
+  () => {
+
+    reconnectControlSocket();
+  }
+);
 
 
 // ----------------------------
@@ -210,7 +393,16 @@ function sendSocketCommand(
     controlSocket.send(
       JSON.stringify(data)
     );
+
+    return;
   }
+
+
+  // If input is attempted while the socket
+  // isn't available, immediately make sure
+  // a connection attempt is underway.
+
+  connectControlSocket();
 }
 
 

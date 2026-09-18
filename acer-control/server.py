@@ -92,6 +92,7 @@ VK_MEDIA_PLAY_PAUSE = 0xB3
 
 KEYEVENTF_EXTENDEDKEY = 0x0001
 KEYEVENTF_KEYUP = 0x0002
+KEYEVENTF_UNICODE = 0x0004
 
 
 def find_window_by_title(keywords):
@@ -743,6 +744,64 @@ def scroll_mouse(
 
 
 # ----------------------------
+# UNICODE KEYBOARD INPUT
+# ----------------------------
+
+def type_unicode_text(
+    text
+):
+    for char in text:
+        codepoint = ord(
+            char
+        )
+
+        if codepoint <= 0xFFFF:
+            utf16_units = [
+                codepoint
+            ]
+
+        else:
+            codepoint -= 0x10000
+
+            high_surrogate = (
+                0xD800
+                + (
+                    codepoint
+                    >> 10
+                )
+            )
+
+            low_surrogate = (
+                0xDC00
+                + (
+                    codepoint
+                    & 0x3FF
+                )
+            )
+
+            utf16_units = [
+                high_surrogate,
+                low_surrogate,
+            ]
+
+        for unit in utf16_units:
+            user32.keybd_event(
+                0,
+                unit,
+                KEYEVENTF_UNICODE,
+                0,
+            )
+
+            user32.keybd_event(
+                0,
+                unit,
+                KEYEVENTF_UNICODE
+                | KEYEVENTF_KEYUP,
+                0,
+            )
+
+
+# ----------------------------
 # STANDARD COMMANDS
 # ----------------------------
 
@@ -1083,9 +1142,8 @@ async def handle_websocket(
                 )
 
                 if text:
-                    pyautogui.write(
-                        text,
-                        interval=0,
+                    type_unicode_text(
+                        text
                     )
 
             elif command == "backspace":
