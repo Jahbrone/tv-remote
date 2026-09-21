@@ -735,6 +735,9 @@ commandButtons.forEach(
 const KEYBOARD_SENTINEL =
   " ";
 
+let keyboardOpen =
+  false;
+
 
 function resetKeyboardInput() {
 
@@ -751,18 +754,20 @@ function resetKeyboardInput() {
 
 function keyboardIsOpen() {
 
-  return (
-    document.activeElement ===
-    keyboardInput
-  );
+  return keyboardOpen;
 }
 
 
 function showKeyboard() {
 
+  keyboardOpen =
+    true;
+
+
   resetKeyboardInput();
 
   keyboardInput.focus();
+
 
   openKeyboardButton.classList.add(
     "keyboard-open"
@@ -772,7 +777,12 @@ function showKeyboard() {
 
 function hideKeyboard() {
 
+  keyboardOpen =
+    false;
+
+
   keyboardInput.blur();
+
 
   openKeyboardButton.classList.remove(
     "keyboard-open"
@@ -797,21 +807,45 @@ openKeyboardButton.addEventListener(
 
 
 keyboardInput.addEventListener(
-  "blur",
+  "focus",
   () => {
 
-    openKeyboardButton.classList.remove(
-      "keyboard-open"
-    );
+    if (!keyboardOpen) {
+      return;
+    }
+
+
+    resetKeyboardInput();
   }
 );
 
 
 keyboardInput.addEventListener(
-  "focus",
-  resetKeyboardInput
-);
+  "blur",
+  () => {
 
+    if (!keyboardOpen) {
+      return;
+    }
+
+
+    /*
+     * The keyboard was opened explicitly.
+     * Keep the hidden input focused when
+     * interacting with the remote.
+     */
+
+    requestAnimationFrame(
+      () => {
+
+        if (keyboardOpen) {
+
+          keyboardInput.focus();
+        }
+      }
+    );
+  }
+);
 
 // ----------------------------
 // REMOTE KEYBOARD
