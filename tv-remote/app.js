@@ -820,9 +820,13 @@ keyboardInput.addEventListener(
 );
 
 
-keyboardInput.addEventListener(
-  "blur",
-  () => {
+// ----------------------------
+// KEEP KEYBOARD OPEN
+// ----------------------------
+
+document.addEventListener(
+  "pointerdown",
+  (event) => {
 
     if (!keyboardOpen) {
       return;
@@ -830,22 +834,40 @@ keyboardInput.addEventListener(
 
 
     /*
-     * The keyboard was opened explicitly.
-     * Keep the hidden input focused when
-     * interacting with the remote.
+     * The keyboard button itself must
+     * still be allowed to take focus
+     * so it can close the keyboard.
      */
 
-    requestAnimationFrame(
-      () => {
+    if (
+      event.target.closest(
+        "#openKeyboardButton"
+      )
+    ) {
 
-        if (keyboardOpen) {
+      return;
+    }
 
-          keyboardInput.focus();
-        }
-      }
-    );
+
+    /*
+     * Prevent controls in the remote
+     * from stealing focus from the
+     * hidden keyboard input.
+     */
+
+    const remoteControl =
+      event.target.closest(
+        "[data-command]"
+      );
+
+
+    if (remoteControl) {
+
+      event.preventDefault();
+    }
   }
 );
+
 
 // ----------------------------
 // REMOTE KEYBOARD
@@ -1092,6 +1114,20 @@ let lastPointerY = null;
 trackpad.addEventListener(
   "pointerdown",
   (event) => {
+
+    /*
+     * Keep the hidden keyboard input
+     * focused while using the trackpad.
+     *
+     * This prevents Android from
+     * dismissing the soft keyboard.
+     */
+
+    if (keyboardOpen) {
+
+      event.preventDefault();
+    }
+
 
     if (
       activePointerId !== null
