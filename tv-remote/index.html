@@ -17,7 +17,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
-    <link rel="stylesheet" href="style.css?v=1.0.91" />
+    <link rel="stylesheet" href="style.css?v=1.0.92" />
   </head>
 
   <body>
@@ -114,13 +114,13 @@
       <!-- BOTTOM CONTROLS -->
       <footer class="bottom-controls">
         <div class="bottom-action-row">
-          <!-- KEYBOARD -->
+          <!-- BACK -->
           <button
-            class="utility-button keyboard-button"
-            id="openKeyboardButton"
-            aria-label="Keyboard"
+            class="utility-button back-button"
+            data-command="back"
+            aria-label="Back"
           >
-            <img src="img/keyboard.svg" alt="" />
+            <span class="back-icon">←</span>
           </button>
 
           <!-- FULLSCREEN -->
@@ -172,11 +172,26 @@
           <div class="trackpad" id="trackpad"></div>
 
           <div class="mouse-buttons">
-            <button class="mouse-button" data-command="left-click">
+            <button
+              class="mouse-button"
+              data-command="left-click"
+            >
               Left Click
             </button>
 
-            <button class="mouse-button" data-command="right-click">
+            <!-- KEYBOARD -->
+            <button
+              class="mouse-button mouse-keyboard-button"
+              id="openKeyboardButton"
+              aria-label="Keyboard"
+            >
+              <img src="img/keyboard.svg" alt="" />
+            </button>
+
+            <button
+              class="mouse-button"
+              data-command="right-click"
+            >
               Right Click
             </button>
           </div>
@@ -194,6 +209,6 @@
       ></textarea>
     </main>
 
-    <script src="app.js?v=1.0.91"></script>
+    <script src="app.js?v=1.0.92"></script>
   </body>
 </html>

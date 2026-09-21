@@ -393,6 +393,33 @@ function sendSocketCommand(
 
 
 // ----------------------------
+// HAPTIC FEEDBACK
+// ----------------------------
+
+function mouseClickHaptic() {
+
+  try {
+
+    if (
+      window.AndroidHaptics &&
+      typeof window.AndroidHaptics.click ===
+        "function"
+    ) {
+
+      window.AndroidHaptics.click();
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Haptic feedback failed:",
+      error
+    );
+  }
+}
+
+
+// ----------------------------
 // TRACKPAD CLICK FEEDBACK
 // ----------------------------
 
@@ -680,6 +707,15 @@ commandButtons.forEach(
           }
 
           return;
+        }
+
+
+        if (
+          command === "left-click" ||
+          command === "right-click"
+        ) {
+
+          mouseClickHaptic();
         }
 
 
@@ -972,6 +1008,9 @@ function sendLeftClick(
     clientX,
     clientY
   );
+
+
+  mouseClickHaptic();
 
 
   sendSocketCommand({

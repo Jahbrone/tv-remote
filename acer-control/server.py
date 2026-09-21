@@ -829,6 +829,14 @@ def execute_command(
 
         return True
 
+    if command == "back":
+        pyautogui.hotkey(
+            "alt",
+            "left",
+        )
+
+        return True
+
     if command == "left-click":
         left_click()
 
