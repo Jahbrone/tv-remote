@@ -202,8 +202,10 @@ class MainActivity : AppCompatActivity() {
             Intent(
                 this,
                 MediaControlService::class.java
-            )
-
+            ).apply {
+                action =
+                    MediaControlService.ACTION_REFRESH
+            }
 
         ContextCompat.startForegroundService(
             this,

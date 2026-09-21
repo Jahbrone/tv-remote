@@ -32,6 +32,9 @@ class MediaControlService : Service() {
 
         const val ACTION_VOLUME_UP =
             "com.laptoptv.remote.VOLUME_UP"
+
+        const val ACTION_REFRESH =
+            "com.laptoptv.remote.REFRESH_MEDIA"
     }
 
     private val acerIp = "192.168.1.187"
@@ -39,14 +42,6 @@ class MediaControlService : Service() {
 
     private lateinit var mediaSession:
             MediaSessionCompat
-
-    /*
-     * Kake's local playback state.
-     *
-     * We start by assuming something is playing,
-     * so the first button displayed is Pause.
-     */
-    private var isPlaying = true
 
     override fun onCreate() {
         super.onCreate()
@@ -73,20 +68,19 @@ class MediaControlService : Service() {
             )
 
         mediaSession.setCallback(
-            object : MediaSessionCompat.Callback() {
+            object :
+                MediaSessionCompat.Callback() {
 
                 override fun onPlay() {
-
-                    if (!isPlaying) {
-                        togglePlayPause()
-                    }
+                    sendCommand(
+                        "play-pause"
+                    )
                 }
 
                 override fun onPause() {
-
-                    if (isPlaying) {
-                        togglePlayPause()
-                    }
+                    sendCommand(
+                        "play-pause"
+                    )
                 }
             }
         )
@@ -98,12 +92,13 @@ class MediaControlService : Service() {
 
     private fun updatePlaybackState() {
 
-        val state =
-            if (isPlaying) {
-                PlaybackStateCompat.STATE_PLAYING
-            } else {
-                PlaybackStateCompat.STATE_PAUSED
-            }
+        /*
+         * Kake does not know the Acer's
+         * actual playback state.
+         *
+         * We expose play/pause as a
+         * simple toggle command.
+         */
 
         val playbackState =
             PlaybackStateCompat.Builder()
@@ -113,9 +108,9 @@ class MediaControlService : Service() {
                             PlaybackStateCompat.ACTION_PLAY_PAUSE
                 )
                 .setState(
-                    state,
+                    PlaybackStateCompat.STATE_PLAYING,
                     PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN,
-                    if (isPlaying) 1f else 0f
+                    1f
                 )
                 .build()
 
@@ -137,29 +132,31 @@ class MediaControlService : Service() {
         when (intent?.action) {
 
             ACTION_VOLUME_DOWN -> {
-                sendCommand("volume-down")
+                sendCommand(
+                    "volume-down"
+                )
             }
 
             ACTION_PLAY_PAUSE -> {
-                togglePlayPause()
+                sendCommand(
+                    "play-pause"
+                )
             }
 
             ACTION_VOLUME_UP -> {
-                sendCommand("volume-up")
+                sendCommand(
+                    "volume-up"
+                )
+            }
+
+            ACTION_REFRESH -> {
+                mediaSession.isActive = true
+                updatePlaybackState()
+                updateNotification()
             }
         }
 
         return START_STICKY
-    }
-
-    private fun togglePlayPause() {
-
-        sendCommand("play-pause")
-
-        isPlaying = !isPlaying
-
-        updatePlaybackState()
-        updateNotification()
     }
 
     // ----------------------------
@@ -221,7 +218,8 @@ class MediaControlService : Service() {
                 this,
                 MediaControlService::class.java
             ).apply {
-                action = ACTION_VOLUME_DOWN
+                action =
+                    ACTION_VOLUME_DOWN
             }
 
         val volumeDownPendingIntent =
@@ -242,7 +240,8 @@ class MediaControlService : Service() {
                 this,
                 MediaControlService::class.java
             ).apply {
-                action = ACTION_PLAY_PAUSE
+                action =
+                    ACTION_PLAY_PAUSE
             }
 
         val playPausePendingIntent =
@@ -263,7 +262,8 @@ class MediaControlService : Service() {
                 this,
                 MediaControlService::class.java
             ).apply {
-                action = ACTION_VOLUME_UP
+                action =
+                    ACTION_VOLUME_UP
             }
 
         val volumeUpPendingIntent =
@@ -274,24 +274,6 @@ class MediaControlService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or
                         PendingIntent.FLAG_UPDATE_CURRENT
             )
-
-        // ------------------------
-        // DYNAMIC PLAY/PAUSE ICON
-        // ------------------------
-
-        val playPauseIcon =
-            if (isPlaying) {
-                R.drawable.ic_pause
-            } else {
-                R.drawable.ic_play
-            }
-
-        val playPauseLabel =
-            if (isPlaying) {
-                "Pause"
-            } else {
-                "Play"
-            }
 
         // ------------------------
         // BUILD NOTIFICATION
@@ -318,25 +300,21 @@ class MediaControlService : Service() {
             .setVisibility(
                 NotificationCompat.VISIBILITY_PUBLIC
             )
-
             .addAction(
                 R.drawable.ic_volume_down,
                 "Volume down",
                 volumeDownPendingIntent
             )
-
             .addAction(
-                playPauseIcon,
-                playPauseLabel,
+                R.drawable.ic_play_pause,
+                "Play / Pause",
                 playPausePendingIntent
             )
-
             .addAction(
                 R.drawable.ic_volume_up,
                 "Volume up",
                 volumeUpPendingIntent
             )
-
             .setStyle(
                 MediaStyle()
                     .setMediaSession(
@@ -348,7 +326,6 @@ class MediaControlService : Service() {
                         2
                     )
             )
-
             .build()
     }
 
