@@ -1,0 +1,156 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
+    <title>TV Remote</title>
+
+    <meta name="theme-color" content="#111111" />
+
+    <link rel="stylesheet" href="offline.css" />
+  </head>
+
+  <body>
+    <main class="remote">
+      <!-- TOP CONTROLS -->
+      <header class="top-bar">
+        <!-- OFFLINE POWER / RETRY -->
+        <button
+          class="icon-button power-button retry-button"
+          id="retryButton"
+          aria-label="Retry connection"
+        >
+          <img src="img/power.svg" alt="Retry connection" />
+        </button>
+
+        <div class="volume-controls">
+          <button class="icon-button volume-button" disabled>−</button>
+
+          <span>VOL</span>
+
+          <span
+            class="connection-status"
+            aria-label="Not connected"
+          ></span>
+
+          <button class="icon-button volume-button" disabled>+</button>
+        </div>
+
+        <button class="icon-button desktop-button" disabled>
+          <img src="img/home.svg" alt="Desktop" />
+        </button>
+      </header>
+
+      <!-- SERVICES -->
+      <section class="app-grid">
+        <button class="app-button" disabled>
+          <img src="img/netflix.svg" alt="Netflix" />
+        </button>
+
+        <button class="app-button" disabled>
+          <img src="img/disney.svg" alt="Disney+" />
+        </button>
+
+        <button class="app-button" disabled>
+          <img src="img/hbo.svg" alt="Max" />
+        </button>
+
+        <button class="app-button" disabled>
+          <img src="img/youtube.svg" alt="YouTube" />
+        </button>
+
+        <button class="app-button" disabled>
+          <img src="img/yle.svg" alt="Yle" />
+        </button>
+
+        <button class="app-button" disabled>
+          <img src="img/internet.svg" alt="Internet" />
+        </button>
+
+        <button class="app-button" disabled>
+          <img src="img/steam.svg" alt="Steam" />
+        </button>
+
+        <button class="app-button" disabled>
+          <img src="img/retro.svg" alt="Retro" />
+        </button>
+
+        <button class="app-button" disabled>
+          <img src="img/photo.svg" alt="Photos" />
+        </button>
+      </section>
+
+      <!-- BOTTOM CONTROLS -->
+      <footer class="bottom-controls">
+        <div class="bottom-action-row">
+          <button class="utility-button back-button" disabled>
+            <span class="back-icon">←</span>
+          </button>
+
+          <button class="utility-button fullscreen-button" disabled>
+            <span class="fullscreen-icon">⛶</span>
+          </button>
+
+          <button class="utility-button" disabled>
+            <span class="play-pause-icon" aria-hidden="true">
+              <span class="play-icon"></span>
+
+              <span class="pause-icon">
+                <span></span>
+                <span></span>
+              </span>
+            </span>
+          </button>
+
+          <button class="utility-button minimise-button" disabled>
+            <span>−</span>
+          </button>
+
+          <button class="utility-button close-apps-button" disabled>
+            ×
+          </button>
+        </div>
+
+        <!-- TRACKPAD -->
+        <div class="trackpad-shell">
+          <div class="trackpad">
+            <span class="not-connected">Not connected</span>
+          </div>
+
+          <div class="mouse-buttons">
+            <button class="mouse-button" disabled>
+              Left Click
+            </button>
+
+            <button
+              class="mouse-button mouse-keyboard-button"
+              disabled
+            >
+              <img src="img/keyboard.svg" alt="" />
+            </button>
+
+            <button class="mouse-button" disabled>
+              Right Click
+            </button>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      document
+        .getElementById("retryButton")
+        .addEventListener("click", function () {
+          if (window.AndroidRemote) {
+            window.AndroidRemote.retryConnection();
+          }
+        });
+    </script>
+  </body>
+</html>

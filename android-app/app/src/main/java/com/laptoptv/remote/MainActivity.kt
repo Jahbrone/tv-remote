@@ -10,13 +10,10 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Button
-import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -26,12 +23,15 @@ import java.net.Socket
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
-    private lateinit var loadingView: LinearLayout
-    private lateinit var offlineView: LinearLayout
 
     private val acerIp = "192.168.1.187"
     private val webPort = 8000
-    private val remoteUrl = "http://$acerIp:$webPort"
+
+    private val remoteUrl =
+        "http://$acerIp:$webPort"
+
+    private val offlineUrl =
+        "file:///android_asset/offline.html"
 
     companion object {
         private const val NOTIFICATION_PERMISSION_REQUEST = 100
@@ -54,6 +54,21 @@ class MainActivity : AppCompatActivity() {
 
 
     // ----------------------------
+    // OFFLINE REMOTE BRIDGE
+    // ----------------------------
+
+    inner class RemoteBridge {
+
+        @JavascriptInterface
+        fun retryConnection() {
+            runOnUiThread {
+                checkAcerAndLoad()
+            }
+        }
+    }
+
+
+    // ----------------------------
     // CREATE
     // ----------------------------
 
@@ -61,34 +76,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
-        super.onCreate(
-            savedInstanceState
-        )
+        super.onCreate(savedInstanceState)
 
         setContentView(
             R.layout.activity_main
         )
 
-
         webView =
             findViewById(
                 R.id.webView
-            )
-
-        loadingView =
-            findViewById(
-                R.id.loadingView
-            )
-
-        offlineView =
-            findViewById(
-                R.id.offlineView
-            )
-
-
-        val retryButton =
-            findViewById<Button>(
-                R.id.retryButton
             )
 
 
@@ -102,6 +98,9 @@ class MainActivity : AppCompatActivity() {
 
             cacheMode =
                 WebSettings.LOAD_NO_CACHE
+
+            allowFileAccess =
+                true
         }
 
 
@@ -111,14 +110,20 @@ class MainActivity : AppCompatActivity() {
         )
 
 
+        webView.addJavascriptInterface(
+            RemoteBridge(),
+            "AndroidRemote"
+        )
+
+
         webView.webViewClient =
             WebViewClient()
 
 
-        retryButton.setOnClickListener {
-
-            checkAcerAndLoad()
-        }
+        // Always show the remote immediately.
+        // If Acer is available, it will be replaced
+        // with the live remote.
+        showOfflineRemote()
 
 
         setupMediaControls()
@@ -242,9 +247,7 @@ class MainActivity : AppCompatActivity() {
             }
 
 
-        if (
-            !vibrator.hasVibrator()
-        ) {
+        if (!vibrator.hasVibrator()) {
             return
         }
 
@@ -277,16 +280,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkAcerAndLoad() {
 
-        showLoading()
-
-
         Thread {
 
             val online =
                 try {
 
-                    Socket().use {
-                            socket ->
+                    Socket().use { socket ->
 
                         socket.connect(
                             InetSocketAddress(
@@ -311,19 +310,13 @@ class MainActivity : AppCompatActivity() {
 
                 if (online) {
 
-                    showWebView()
-
-                    webView.clearCache(
-                        true
-                    )
-
                     webView.loadUrl(
                         remoteUrl
                     )
 
                 } else {
 
-                    showOffline()
+                    showOfflineRemote()
                 }
             }
 
@@ -332,44 +325,19 @@ class MainActivity : AppCompatActivity() {
 
 
     // ----------------------------
-    // UI STATES
+    // OFFLINE REMOTE
     // ----------------------------
 
-    private fun showLoading() {
+    private fun showOfflineRemote() {
 
-        webView.visibility =
-            View.GONE
+        if (
+            webView.url !=
+            offlineUrl
+        ) {
 
-        offlineView.visibility =
-            View.GONE
-
-        loadingView.visibility =
-            View.VISIBLE
-    }
-
-
-    private fun showOffline() {
-
-        webView.visibility =
-            View.GONE
-
-        loadingView.visibility =
-            View.GONE
-
-        offlineView.visibility =
-            View.VISIBLE
-    }
-
-
-    private fun showWebView() {
-
-        loadingView.visibility =
-            View.GONE
-
-        offlineView.visibility =
-            View.GONE
-
-        webView.visibility =
-            View.VISIBLE
+            webView.loadUrl(
+                offlineUrl
+            )
+        }
     }
 }
