@@ -43,6 +43,11 @@ class MediaControlService : Service() {
     private lateinit var mediaSession:
             MediaSessionCompat
 
+
+    // ----------------------------
+    // CREATE
+    // ----------------------------
+
     override fun onCreate() {
         super.onCreate()
 
@@ -54,6 +59,7 @@ class MediaControlService : Service() {
             createNotification()
         )
     }
+
 
     // ----------------------------
     // MEDIA SESSION
@@ -90,6 +96,7 @@ class MediaControlService : Service() {
         mediaSession.isActive = true
     }
 
+
     private fun updatePlaybackState() {
 
         /*
@@ -118,6 +125,7 @@ class MediaControlService : Service() {
             playbackState
         )
     }
+
 
     // ----------------------------
     // COMMAND HANDLING
@@ -156,11 +164,16 @@ class MediaControlService : Service() {
             }
         }
 
-        return START_STICKY
+        /*
+         * Do not recreate the service
+         * automatically after it is stopped.
+         */
+        return START_NOT_STICKY
     }
 
+
     // ----------------------------
-    // NOTIFICATION
+    // NOTIFICATION CHANNEL
     // ----------------------------
 
     private fun createNotificationChannel() {
@@ -191,6 +204,11 @@ class MediaControlService : Service() {
         }
     }
 
+
+    // ----------------------------
+    // NOTIFICATION
+    // ----------------------------
+
     private fun createNotification():
             Notification {
 
@@ -208,6 +226,7 @@ class MediaControlService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or
                         PendingIntent.FLAG_UPDATE_CURRENT
             )
+
 
         // ------------------------
         // VOLUME DOWN
@@ -231,6 +250,7 @@ class MediaControlService : Service() {
                         PendingIntent.FLAG_UPDATE_CURRENT
             )
 
+
         // ------------------------
         // PLAY / PAUSE
         // ------------------------
@@ -252,6 +272,7 @@ class MediaControlService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or
                         PendingIntent.FLAG_UPDATE_CURRENT
             )
+
 
         // ------------------------
         // VOLUME UP
@@ -275,47 +296,67 @@ class MediaControlService : Service() {
                         PendingIntent.FLAG_UPDATE_CURRENT
             )
 
+
         // ------------------------
-        // BUILD NOTIFICATION
+        // BASE NOTIFICATION
         // ------------------------
 
-        return NotificationCompat.Builder(
-            this,
-            CHANNEL_ID
-        )
-            .setSmallIcon(
-                R.mipmap.ic_launcher
+        val builder =
+            NotificationCompat.Builder(
+                this,
+                CHANNEL_ID
             )
-            .setContentTitle(
-                "Kake Ruben"
-            )
-            .setContentText(
-                "TV Remote"
-            )
-            .setContentIntent(
-                openAppPendingIntent
-            )
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setVisibility(
-                NotificationCompat.VISIBILITY_PUBLIC
-            )
-            .addAction(
-                R.drawable.ic_volume_down,
-                "Volume down",
-                volumeDownPendingIntent
-            )
-            .addAction(
-                R.drawable.ic_play_pause,
-                "Play / Pause",
-                playPausePendingIntent
-            )
-            .addAction(
-                R.drawable.ic_volume_up,
-                "Volume up",
-                volumeUpPendingIntent
-            )
-            .setStyle(
+                .setSmallIcon(
+                    R.mipmap.ic_launcher
+                )
+                .setContentTitle(
+                    "Kake Ruben"
+                )
+                .setContentText(
+                    "TV Remote"
+                )
+                .setContentIntent(
+                    openAppPendingIntent
+                )
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setVisibility(
+                    NotificationCompat.VISIBILITY_PUBLIC
+                )
+                .addAction(
+                    R.drawable.ic_volume_down,
+                    "Volume down",
+                    volumeDownPendingIntent
+                )
+                .addAction(
+                    R.drawable.ic_play_pause,
+                    "Play / Pause",
+                    playPausePendingIntent
+                )
+                .addAction(
+                    R.drawable.ic_volume_up,
+                    "Volume up",
+                    volumeUpPendingIntent
+                )
+
+
+        // ------------------------
+        // MODERN ANDROID
+        // ------------------------
+        //
+        // Keep the existing MediaStyle
+        // behaviour on Android 14+.
+        //
+        // This preserves the working
+        // OnePlus 11 implementation.
+        //
+
+        if (
+            Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+        ) {
+
+            builder.setStyle(
                 MediaStyle()
                     .setMediaSession(
                         mediaSession.sessionToken
@@ -326,8 +367,28 @@ class MediaControlService : Service() {
                         2
                     )
             )
-            .build()
+        }
+
+
+        // ------------------------
+        // ANDROID 13 AND BELOW
+        // ------------------------
+        //
+        // Do NOT attach MediaStyle.
+        //
+        // OxygenOS 13 was replacing our
+        // custom actions with its system
+        // media player and only exposing
+        // Play/Pause.
+        //
+        // Without MediaStyle, Android
+        // renders our explicit notification
+        // actions instead.
+        //
+
+        return builder.build()
     }
+
 
     private fun updateNotification() {
 
@@ -341,6 +402,7 @@ class MediaControlService : Service() {
             createNotification()
         )
     }
+
 
     // ----------------------------
     // ACER COMMAND
@@ -404,7 +466,7 @@ class MediaControlService : Service() {
 
                 /*
                  * Acer unavailable.
-                 * Keep controls alive.
+                 * Nothing to do.
                  */
 
             } finally {
@@ -414,17 +476,66 @@ class MediaControlService : Service() {
         }.start()
     }
 
+
+    // ----------------------------
+    // APP REMOVED FROM RECENTS
+    // ----------------------------
+
+    override fun onTaskRemoved(
+        rootIntent: Intent?
+    ) {
+
+        stopMediaControls()
+
+        super.onTaskRemoved(
+            rootIntent
+        )
+    }
+
+
     // ----------------------------
     // CLEANUP
     // ----------------------------
 
+    private fun stopMediaControls() {
+
+        if (
+            ::mediaSession.isInitialized
+        ) {
+
+            mediaSession.isActive =
+                false
+
+            mediaSession.release()
+        }
+
+        stopForeground(
+            STOP_FOREGROUND_REMOVE
+        )
+
+        stopSelf()
+    }
+
+
     override fun onDestroy() {
 
-        mediaSession.isActive = false
-        mediaSession.release()
+        if (
+            ::mediaSession.isInitialized
+        ) {
+
+            mediaSession.isActive =
+                false
+
+            mediaSession.release()
+        }
+
+        stopForeground(
+            STOP_FOREGROUND_REMOVE
+        )
 
         super.onDestroy()
     }
+
 
     override fun onBind(
         intent: Intent?
