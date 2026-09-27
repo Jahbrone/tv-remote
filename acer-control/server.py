@@ -68,12 +68,22 @@ STREAMING_SERVICES = {
         "window_titles": ["YouTube"],
     },
 
-    "yle": {
+        "yle": {
         "url": "https://areena.yle.fi",
         "profile": "yle",
         "window_titles": [
             "Yle Areena",
             "Areena",
+        ],
+    },
+
+    "katsomo": {
+        "url": "https://www.mtv.fi",
+        "profile": "katsomo",
+        "window_titles": [
+            "MTV Katsomo",
+            "Katsomo",
+            "MTV",
         ],
     },
 }

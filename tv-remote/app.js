@@ -609,6 +609,7 @@ const CLOSEABLE_COMMANDS =
     "max",
     "youtube",
     "yle",
+    "katsomo",
     "steam",
     "retro",
     "screensaver",

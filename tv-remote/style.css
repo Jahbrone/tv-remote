@@ -617,7 +617,9 @@ body.close-mode-active .close-apps-button {
 .mouse-keyboard-button.keyboard-open {
   background: #505050;
 }
-
+.hbo-logo {
+  filter: invert(1);
+}
 /* ----------------------------
    HIDDEN KEYBOARD INPUT
 ---------------------------- */
