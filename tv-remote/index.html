@@ -17,7 +17,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
-    <link rel="stylesheet" href="style.css?v=1.2.1" />
+    <link rel="stylesheet" href="style.css?v=1.2.2" />
   </head>
 
   <body>
@@ -70,33 +70,67 @@
 
       <!-- SERVICES -->
       <section class="app-grid">
-        <button class="app-button" data-command="netflix" aria-label="Netflix">
+        <button
+          class="app-button"
+          data-command="netflix"
+          aria-label="Netflix"
+        >
           <img src="img/netflix.svg" alt="Netflix" />
         </button>
 
-        <button class="app-button" data-command="disney" aria-label="Disney+">
+        <button
+          class="app-button"
+          data-command="disney"
+          aria-label="Disney+"
+        >
           <img src="img/disney.svg" alt="Disney+" />
         </button>
 
-        <button class="app-button" data-command="max" aria-label="Max">
-          <img class="hbo-logo" src="img/hbo.svg" alt="HBO Max" />
+        <button
+          class="app-button"
+          data-command="max"
+          aria-label="Max"
+        >
+          <img
+            class="hbo-logo"
+            src="img/hbo.svg"
+            alt="HBO Max"
+          />
         </button>
 
-        <button class="app-button" data-command="youtube" aria-label="YouTube">
+        <button
+          class="app-button"
+          data-command="youtube"
+          aria-label="YouTube"
+        >
           <img src="img/youtube.svg" alt="YouTube" />
         </button>
 
-        <button class="app-button" data-command="yle" aria-label="Yle">
+        <button
+          class="app-button"
+          data-command="yle"
+          aria-label="Yle"
+        >
           <img src="img/yle.svg" alt="Yle" />
         </button>
 
-        <button class="app-button" data-command="web" aria-label="Internet">
+        <button
+          class="app-button"
+          data-command="web"
+          aria-label="Internet"
+        >
           <img src="img/internet.svg" alt="Internet" />
         </button>
 
-        <!-- <button class="app-button" data-command="steam" aria-label="Steam">
+        <!--
+        <button
+          class="app-button"
+          data-command="steam"
+          aria-label="Steam"
+        >
           <img src="img/steam.svg" alt="Steam" />
-        </button> -->
+        </button>
+        -->
 
         <button
           class="app-button"
@@ -106,7 +140,11 @@
           <img src="img/katsomo.svg" alt="MTV Katsomo" />
         </button>
 
-        <button class="app-button" data-command="retro" aria-label="Retro">
+        <button
+          class="app-button"
+          data-command="retro"
+          aria-label="Retro"
+        >
           <img src="img/retro.svg" alt="Retro" />
         </button>
 
@@ -146,7 +184,10 @@
             data-command="play-pause"
             aria-label="Play or pause"
           >
-            <span class="play-pause-icon" aria-hidden="true">
+            <span
+              class="play-pause-icon"
+              aria-hidden="true"
+            >
               <span class="play-icon"></span>
 
               <span class="pause-icon">
@@ -165,11 +206,11 @@
             <span>−</span>
           </button>
 
-          <!-- CLOSE APPS -->
+          <!-- CLOSE APPS / CLOSE FOREGROUND -->
           <button
             class="utility-button close-apps-button"
             id="closeAppsButton"
-            aria-label="Close Apps"
+            aria-label="Close apps. Hold to close current window."
           >
             ×
           </button>
@@ -177,10 +218,24 @@
 
         <!-- TRACKPAD -->
         <div class="trackpad-shell">
-          <div class="trackpad" id="trackpad"></div>
+          <div
+            class="trackpad"
+            id="trackpad"
+          >
+            <div
+              class="scroll-strip"
+              id="scrollStrip"
+              aria-hidden="true"
+            >
+              <span class="scroll-strip-icon">↕</span>
+            </div>
+          </div>
 
           <div class="mouse-buttons">
-            <button class="mouse-button" data-command="left-click">
+            <button
+              class="mouse-button"
+              data-command="left-click"
+            >
               Left Click
             </button>
 
@@ -193,7 +248,10 @@
               <img src="img/keyboard.svg" alt="" />
             </button>
 
-            <button class="mouse-button" data-command="right-click">
+            <button
+              class="mouse-button"
+              data-command="right-click"
+            >
               Right Click
             </button>
           </div>
@@ -211,6 +269,6 @@
       ></textarea>
     </main>
 
-    <script src="app.js?v=1.2.1"></script>
+    <script src="app.js?v=1.2.2"></script>
   </body>
 </html>

@@ -1,3 +1,7 @@
+const APP_VERSION =
+  "1.2.2";
+
+
 const SERVER_URL =
   "http://192.168.1.187:8765";
 
@@ -20,6 +24,11 @@ const trackpad =
     "trackpad"
   );
 
+const scrollStrip =
+  document.getElementById(
+    "scrollStrip"
+  );
+
 const powerButton =
   document.getElementById(
     "powerButton"
@@ -34,6 +43,11 @@ const connectionStatus =
   document.getElementById(
     "connectionStatus"
   );
+
+
+console.log(
+  `TV Remote v${APP_VERSION}`
+);
 
 
 // ----------------------------
@@ -599,6 +613,231 @@ powerButton.addEventListener(
 
 
 // ----------------------------
+// CLOSE BUTTON — TAP / LONG HOLD
+// ----------------------------
+
+const CLOSE_HOLD_TIME =
+  1000;
+
+let closeHoldTimer = null;
+
+let closeHoldTriggered =
+  false;
+
+
+function clearCloseHoldTimer() {
+
+  if (
+    closeHoldTimer !== null
+  ) {
+
+    clearTimeout(
+      closeHoldTimer
+    );
+
+    closeHoldTimer = null;
+  }
+}
+
+
+function startCloseHold(
+  event
+) {
+
+  event.preventDefault();
+  event.stopPropagation();
+
+
+  closeHoldTriggered =
+    false;
+
+
+  closeAppsButton.classList.add(
+    "holding"
+  );
+
+
+  clearCloseHoldTimer();
+
+
+  closeHoldTimer =
+    setTimeout(
+      () => {
+
+        closeHoldTimer =
+          null;
+
+        closeHoldTriggered =
+          true;
+
+
+        closeAppsButton.classList.remove(
+          "holding"
+        );
+
+        closeAppsButton.classList.add(
+          "close-triggered"
+        );
+
+
+        /*
+         * If selective close mode
+         * was already active, leave
+         * it before closing the
+         * foreground window.
+         */
+
+        setCloseMode(
+          false
+        );
+
+
+        mouseClickHaptic();
+
+
+        sendCommand(
+          "close-foreground"
+        );
+
+
+        setTimeout(
+          () => {
+
+            closeAppsButton.classList.remove(
+              "close-triggered"
+            );
+
+          },
+          300
+        );
+
+      },
+      CLOSE_HOLD_TIME
+    );
+}
+
+
+function finishCloseHold(
+  event
+) {
+
+  event.preventDefault();
+  event.stopPropagation();
+
+
+  const wasTriggered =
+    closeHoldTriggered;
+
+
+  clearCloseHoldTimer();
+
+
+  closeAppsButton.classList.remove(
+    "holding"
+  );
+
+
+  if (!wasTriggered) {
+
+    setCloseMode(
+      !closeMode
+    );
+  }
+
+
+  /*
+   * Keep this true until the
+   * synthetic click event that
+   * follows pointerup has been
+   * swallowed.
+   */
+
+  if (wasTriggered) {
+
+    setTimeout(
+      () => {
+
+        closeHoldTriggered =
+          false;
+
+      },
+      0
+    );
+
+  } else {
+
+    closeHoldTriggered =
+      false;
+  }
+}
+
+
+function cancelCloseHold(
+  event
+) {
+
+  if (event) {
+
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+
+  clearCloseHoldTimer();
+
+
+  closeAppsButton.classList.remove(
+    "holding"
+  );
+}
+
+
+closeAppsButton.addEventListener(
+  "pointerdown",
+  startCloseHold
+);
+
+
+closeAppsButton.addEventListener(
+  "pointerup",
+  finishCloseHold
+);
+
+
+closeAppsButton.addEventListener(
+  "pointercancel",
+  cancelCloseHold
+);
+
+
+closeAppsButton.addEventListener(
+  "pointerleave",
+  (event) => {
+
+    /*
+     * Do not cancel merely because
+     * the finger drifts slightly
+     * outside after pointer capture
+     * on some Android WebViews.
+     *
+     * Only clear the visual state.
+     */
+
+    if (
+      closeHoldTimer === null
+    ) {
+      return;
+    }
+
+
+    closeAppsButton.classList.remove(
+      "holding"
+    );
+  }
+);
+
+
+// ----------------------------
 // CLOSE MODE
 // ----------------------------
 
@@ -643,17 +882,21 @@ function setCloseMode(
 }
 
 
+/*
+ * Swallow the normal click.
+ *
+ * Tap behaviour is handled by
+ * pointerup above. This prevents
+ * a long hold from also toggling
+ * close mode afterwards.
+ */
+
 closeAppsButton.addEventListener(
   "click",
   (event) => {
 
     event.preventDefault();
     event.stopPropagation();
-
-
-    setCloseMode(
-      !closeMode
-    );
   }
 );
 
@@ -1025,6 +1268,23 @@ function sendMouseMove(
 
 
 // ----------------------------
+// SCROLL
+// ----------------------------
+
+function sendScroll(
+  delta
+) {
+
+  sendSocketCommand({
+    command:
+      "scroll",
+
+    delta,
+  });
+}
+
+
+// ----------------------------
 // TRACKPAD CLICK GESTURES
 // ----------------------------
 
@@ -1112,6 +1372,55 @@ let lastPointerX = null;
 let lastPointerY = null;
 
 
+/*
+ * Once a gesture begins in the
+ * rightmost 10%, it stays in
+ * scroll mode until the finger
+ * is lifted.
+ */
+
+let pointerMode = null;
+
+
+function pointerStartedInScrollStrip(
+  clientX
+) {
+
+  const rect =
+    trackpad.getBoundingClientRect();
+
+
+  const relativeX =
+    clientX - rect.left;
+
+
+  const scrollStart =
+    rect.width * 0.90;
+
+
+  return (
+    relativeX >=
+    scrollStart
+  );
+}
+
+
+function setScrollStripActive(
+  active
+) {
+
+  if (!scrollStrip) {
+    return;
+  }
+
+
+  scrollStrip.classList.toggle(
+    "active",
+    active
+  );
+}
+
+
 trackpad.addEventListener(
   "pointerdown",
   (event) => {
@@ -1119,9 +1428,6 @@ trackpad.addEventListener(
     /*
      * Keep the hidden keyboard input
      * focused while using the trackpad.
-     *
-     * This prevents Android from
-     * dismissing the soft keyboard.
      */
 
     if (keyboardOpen) {
@@ -1162,9 +1468,52 @@ trackpad.addEventListener(
       false;
 
 
+    if (
+      pointerStartedInScrollStrip(
+        event.clientX
+      )
+    ) {
+
+      pointerMode =
+        "scroll";
+
+      setScrollStripActive(
+        true
+      );
+
+      cancelHold();
+
+      resetTapHistory();
+
+    } else {
+
+      pointerMode =
+        "mouse";
+
+      setScrollStripActive(
+        false
+      );
+    }
+
+
     trackpad.setPointerCapture(
       event.pointerId
     );
+
+
+    /*
+     * Scroll-strip gestures must
+     * never become clicks or
+     * long-hold clicks.
+     */
+
+    if (
+      pointerMode ===
+      "scroll"
+    ) {
+
+      return;
+    }
 
 
     cancelHold();
@@ -1184,7 +1533,9 @@ trackpad.addEventListener(
           if (
             !pointerMoved &&
             activePointerId ===
-              event.pointerId
+              event.pointerId &&
+            pointerMode ===
+              "mouse"
           ) {
 
             holdTriggered =
@@ -1228,6 +1579,44 @@ trackpad.addEventListener(
     const deltaY =
       event.clientY -
       lastPointerY;
+
+
+    /*
+     * Dedicated one-finger
+     * scrolling.
+     */
+
+    if (
+      pointerMode ===
+      "scroll"
+    ) {
+
+      if (
+        Math.abs(deltaY) >
+        0
+      ) {
+
+        /*
+         * Same direction convention
+         * as the existing two-finger
+         * scrolling.
+         */
+
+        sendScroll(
+          -deltaY
+        );
+      }
+
+
+      lastPointerX =
+        event.clientX;
+
+      lastPointerY =
+        event.clientY;
+
+
+      return;
+    }
 
 
     const totalMoveX =
@@ -1288,6 +1677,63 @@ function endPointer(
 
 
   cancelHold();
+
+
+  /*
+   * Scroll gestures finish here
+   * without triggering tap,
+   * double-tap or hold-click.
+   */
+
+  if (
+    pointerMode ===
+    "scroll"
+  ) {
+
+    setScrollStripActive(
+      false
+    );
+
+
+    activePointerId =
+      null;
+
+    lastPointerX =
+      null;
+
+    lastPointerY =
+      null;
+
+    pointerStartX =
+      null;
+
+    pointerStartY =
+      null;
+
+    pointerMoved =
+      false;
+
+    holdTriggered =
+      false;
+
+    pointerMode =
+      null;
+
+
+    try {
+
+      trackpad.releasePointerCapture(
+        event.pointerId
+      );
+
+    } catch {
+
+      // Already released.
+    }
+
+
+    return;
+  }
 
 
   if (
@@ -1370,6 +1816,14 @@ function endPointer(
   holdTriggered =
     false;
 
+  pointerMode =
+    null;
+
+
+  setScrollStripActive(
+    false
+  );
+
 
   try {
 
@@ -1398,6 +1852,10 @@ trackpad.addEventListener(
 
     resetTapHistory();
 
+    setScrollStripActive(
+      false
+    );
+
 
     if (
       event.pointerId ===
@@ -1418,6 +1876,9 @@ trackpad.addEventListener(
 
       pointerStartY =
         null;
+
+      pointerMode =
+        null;
     }
   }
 );
@@ -1428,19 +1889,6 @@ trackpad.addEventListener(
 // ----------------------------
 
 let lastTwoFingerY = null;
-
-
-function sendScroll(
-  delta
-) {
-
-  sendSocketCommand({
-    command:
-      "scroll",
-
-    delta,
-  });
-}
 
 
 trackpad.addEventListener(
@@ -1468,6 +1916,14 @@ trackpad.addEventListener(
 
     holdTriggered =
       false;
+
+    pointerMode =
+      null;
+
+
+    setScrollStripActive(
+      false
+    );
 
 
     const y1 =
@@ -1576,6 +2032,15 @@ trackpad.addEventListener(
 
     lastTwoFingerY =
       null;
+
+    pointerMode =
+      null;
+
+
+    setScrollStripActive(
+      false
+    );
+
 
     cancelHold();
 

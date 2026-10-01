@@ -66,7 +66,9 @@ button:active {
   display: flex;
   flex-direction: column;
 
-  padding: max(14px, env(safe-area-inset-top)) 14px
+  padding:
+    max(14px, env(safe-area-inset-top))
+    14px
     max(14px, env(safe-area-inset-bottom));
 
   gap: 12px;
@@ -214,7 +216,9 @@ body.close-mode-active .close-apps-button {
 
   background: #7a2f2f;
 
-  box-shadow: 0 0 5px rgba(255, 80, 80, 0.4);
+  box-shadow:
+    0 0 5px
+    rgba(255, 80, 80, 0.4);
 
   transition:
     background 0.2s ease,
@@ -224,7 +228,9 @@ body.close-mode-active .close-apps-button {
 .connection-status.connected {
   background: #55c968;
 
-  box-shadow: 0 0 6px rgba(85, 201, 104, 0.65);
+  box-shadow:
+    0 0 6px
+    rgba(85, 201, 104, 0.65);
 }
 
 /* ----------------------------
@@ -236,7 +242,11 @@ body.close-mode-active .close-apps-button {
 
   display: grid;
 
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
 
   gap: 10px;
 
@@ -443,6 +453,24 @@ body.close-mode-active .close-apps-button {
   color: #fff;
 }
 
+/* Long-hold feedback */
+
+.close-apps-button.holding {
+  transform: scale(0.92);
+
+  background: #c95f5f;
+}
+
+.close-apps-button.close-triggered {
+  transform: scale(1.05);
+
+  background: #e22f2f;
+
+  color: #fff;
+
+  filter: brightness(1.15);
+}
+
 /* ----------------------------
    TRACKPAD
 ---------------------------- */
@@ -490,7 +518,9 @@ body.close-mode-active .close-apps-button {
   position: absolute;
   inset: 0;
 
-  background-image: url("img/trackpad-bg.png");
+  background-image:
+    url("img/trackpad-bg.png");
+
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -498,6 +528,91 @@ body.close-mode-active .close-apps-button {
   opacity: 0.09;
 
   pointer-events: none;
+}
+
+/* ----------------------------
+   ONE-FINGER SCROLL STRIP
+---------------------------- */
+
+.scroll-strip {
+  position: absolute;
+
+  top: 0;
+  right: 0;
+  bottom: 0;
+
+  width: 5%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /*
+   * Blue tint while still allowing
+   * the trackpad texture underneath
+   * to remain visible.
+   */
+  background:
+    rgba(65, 105, 190, 0.2);
+
+  border-left:
+    1px solid
+    rgba(120, 175, 235, 0.18);
+
+  border-radius:
+    0
+    16px
+    0
+    0;
+
+  pointer-events: none;
+
+  transition:
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.scroll-strip-icon {
+  color:
+    rgba(
+      185,
+      215,
+      245,
+      0.45
+    );
+
+  font-size: 19px;
+  font-weight: 400;
+
+  line-height: 1;
+
+  pointer-events: none;
+
+  transition:
+    color 0.12s ease,
+    transform 0.12s ease;
+}
+
+.scroll-strip.active {
+  background:
+    rgba(65, 135, 210, 0.36);
+
+  box-shadow:
+    inset 2px 0 8px
+    rgba(70, 145, 220, 0.12);
+}
+
+.scroll-strip.active
+.scroll-strip-icon {
+  color:
+    rgba(
+      215,
+      235,
+      255,
+      0.85
+    );
+
+  transform: scale(1.08);
 }
 
 /* ----------------------------
@@ -510,7 +625,9 @@ body.close-mode-active .close-apps-button {
   width: 18px;
   height: 18px;
 
-  border: 2px solid rgba(255, 255, 255, 0.75);
+  border:
+    2px solid
+    rgba(255, 255, 255, 0.75);
 
   border-radius: 50%;
 
@@ -575,15 +692,19 @@ body.close-mode-active .close-apps-button {
 }
 
 .mouse-button:first-child {
-  border-radius: 0 0 0 14px;
+  border-radius:
+    0 0 0 14px;
 
-  border-right: 1px solid #444;
+  border-right:
+    1px solid #444;
 }
 
 .mouse-button:last-child {
-  border-radius: 0 0 14px 0;
+  border-radius:
+    0 0 14px 0;
 
-  border-left: 1px solid #444;
+  border-left:
+    1px solid #444;
 }
 
 /* ----------------------------
@@ -617,9 +738,11 @@ body.close-mode-active .close-apps-button {
 .mouse-keyboard-button.keyboard-open {
   background: #505050;
 }
+
 .hbo-logo {
   filter: invert(1);
 }
+
 /* ----------------------------
    HIDDEN KEYBOARD INPUT
 ---------------------------- */

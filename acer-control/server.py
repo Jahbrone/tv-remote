@@ -17,6 +17,17 @@ import websockets
 from photos import get_all_photos
 
 
+# ----------------------------
+# VERSION
+# ----------------------------
+
+APP_VERSION = "1.2.2"
+
+
+# ----------------------------
+# SERVER CONFIG
+# ----------------------------
+
 HOST = "0.0.0.0"
 HTTP_PORT = 8765
 WS_PORT = 8766
@@ -68,7 +79,7 @@ STREAMING_SERVICES = {
         "window_titles": ["YouTube"],
     },
 
-        "yle": {
+    "yle": {
         "url": "https://areena.yle.fi",
         "profile": "yle",
         "window_titles": [
@@ -94,15 +105,20 @@ STREAMING_SERVICES = {
 # ----------------------------
 
 user32 = ctypes.windll.user32
+kernel32 = ctypes.windll.kernel32
 
 SW_RESTORE = 9
 SW_MINIMIZE = 6
+
+WM_CLOSE = 0x0010
 
 VK_MEDIA_PLAY_PAUSE = 0xB3
 
 KEYEVENTF_EXTENDEDKEY = 0x0001
 KEYEVENTF_KEYUP = 0x0002
 KEYEVENTF_UNICODE = 0x0004
+
+PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 
 
 def find_window_by_title(keywords):
@@ -175,6 +191,89 @@ def minimise_active_window():
     user32.ShowWindow(
         hwnd,
         SW_MINIMIZE,
+    )
+
+    return True
+
+
+# ----------------------------
+# FOREGROUND WINDOW CONTROL
+# ----------------------------
+
+def get_window_process_name(hwnd):
+    if not hwnd:
+        return None
+
+    process_id = wintypes.DWORD()
+
+    user32.GetWindowThreadProcessId(
+        hwnd,
+        ctypes.byref(process_id),
+    )
+
+    if not process_id.value:
+        return None
+
+    process_handle = kernel32.OpenProcess(
+        PROCESS_QUERY_LIMITED_INFORMATION,
+        False,
+        process_id.value,
+    )
+
+    if not process_handle:
+        return None
+
+    try:
+        buffer_size = wintypes.DWORD(
+            32768
+        )
+
+        buffer = ctypes.create_unicode_buffer(
+            buffer_size.value
+        )
+
+        success = (
+            kernel32.QueryFullProcessImageNameW(
+                process_handle,
+                0,
+                buffer,
+                ctypes.byref(buffer_size),
+            )
+        )
+
+        if not success:
+            return None
+
+        return os.path.basename(
+            buffer.value
+        ).lower()
+
+    finally:
+        kernel32.CloseHandle(
+            process_handle
+        )
+
+
+def close_foreground_window():
+    hwnd = user32.GetForegroundWindow()
+
+    if not hwnd:
+        return False
+
+    process_name = get_window_process_name(
+        hwnd
+    )
+
+    # Protect Windows Explorer / desktop /
+    # taskbar from being closed by the remote.
+    if process_name == "explorer.exe":
+        return False
+
+    user32.PostMessageW(
+        hwnd,
+        WM_CLOSE,
+        0,
+        0,
     )
 
     return True
@@ -880,6 +979,9 @@ def execute_command(
     if command == "fullscreen":
         return toggle_fullscreen()
 
+    if command == "close-foreground":
+        return close_foreground_window()
+
     if command == "steam":
         try:
             os.startfile(
@@ -978,6 +1080,7 @@ class ControlHandler(
 
             response = {
                 "photos": photos,
+                "version": APP_VERSION,
             }
 
             self.send_response(
@@ -1058,6 +1161,7 @@ class ControlHandler(
                 "status": "ok",
                 "command": command,
                 "executed": executed,
+                "version": APP_VERSION,
             }
 
             self.send_response(
@@ -1213,6 +1317,10 @@ async def run_websocket_server():
 # ----------------------------
 
 def main():
+    print(
+        f"LaptopTV Control Server v{APP_VERSION}"
+    )
+
     http_thread = threading.Thread(
         target=run_http_server,
         daemon=True,
